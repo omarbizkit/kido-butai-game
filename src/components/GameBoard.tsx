@@ -202,6 +202,33 @@ export const GameBoard: React.FC = () => {
               <span className="font-mono">{isJapanFleetFound ? 'DISCOVERED' : 'HIDDEN'}</span>
             </div>
           </div>
+
+          <div className="mt-4 p-4 bg-slate-900/80 rounded-xl border border-slate-700 shadow-inner">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">Turn Track / Fleet Recovery</h4>
+              <span className="text-[9px] text-slate-600 italic">Expected Return: 3 Turn Delay</span>
+            </div>
+            <div className="flex gap-4 min-h-[50px] overflow-x-auto pb-2">
+              {[1, 2, 3].map((delay) => (
+                <div key={delay} className="flex-1 min-w-[100px] p-2 bg-black/20 rounded border border-slate-800 flex flex-col gap-2">
+                  <div className="text-[9px] text-slate-500 uppercase font-bold text-center border-b border-slate-800 pb-1">
+                    T-{delay}
+                  </div>
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    {units
+                      .filter(u => u.location === 'TURN_TRACK' && u.turnsUntilReady === delay)
+                      .map(u => (
+                        <UnitToken key={u.id} unit={u} className="w-8 h-8" />
+                      ))
+                    }
+                    {units.filter(u => u.location === 'TURN_TRACK' && u.turnsUntilReady === delay).length === 0 && (
+                      <div className="h-8 flex items-center justify-center opacity-10">---</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="h-full bg-black/40 rounded-xl border border-slate-800 p-4 font-mono text-xs overflow-y-auto flex flex-col-reverse gap-1 min-h-[200px]">

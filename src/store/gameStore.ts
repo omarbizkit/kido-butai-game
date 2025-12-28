@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getNextPhase, resolveRecon, canMoveUnit } from '../engine/rules';
+import { getNextPhase, resolveRecon, canMoveUnit, processTurnTrack } from '../engine/rules';
 import { applyDamage, resolveJapaneseStrike } from '../engine/combat';
 import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target } from '../types';
 
@@ -77,6 +77,12 @@ export const useGameStore = create<GameStore>()(
             updates.turn = TURNS[nextIndex];
             updates.log = [`--- Turn ${TURNS[nextIndex]} ---`, ...updates.log!];
           }
+        }
+
+        if (result.nextPhase === 'CLEANUP') {
+          const recovery = processTurnTrack(state.units);
+          updates.units = recovery.units;
+          updates.log = [...recovery.log, ...updates.log!];
         }
 
         set(updates);
@@ -156,7 +162,7 @@ export const useGameStore = create<GameStore>()(
 
             if (result.aborted) {
               newLogs.push(`${u.id} (${u.type}) ABORTED mission and returning. (Rolls: ${result.rolls.join(',')})`);
-              return { ...u, status: 'RETURNING' as const, location: 'TURN_TRACK' as GameLocation };
+              return { ...u, status: 'RETURNING' as const, location: 'TURN_TRACK' as GameLocation, turnsUntilReady: 3 };
             }
 
             newLogs.push(`${u.id} (${u.type}) rolls ${result.rolls.join(',')} vs ${target}: ${result.hits} hit(s)`);
@@ -169,7 +175,7 @@ export const useGameStore = create<GameStore>()(
             }
 
             // After strike, unit returns (simulated by moving to TURN_TRACK)
-            return { ...u, location: 'TURN_TRACK' as GameLocation, status: 'RETURNING' as const };
+            return { ...u, location: 'TURN_TRACK' as GameLocation, status: 'RETURNING' as const, turnsUntilReady: 3 };
           }
           return u;
         });

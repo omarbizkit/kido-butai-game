@@ -64,6 +64,19 @@ kido-butai/
 - **Movement Engine**: Command system for moving units between Ready Decks, CAP, and Staging.
 - **Validation Rules**: Type-specific movement restrictions (e.g., only Fighters to CAP).
 
+### ✅ Combat & Strike Engine
+
+- **Multi-Stage Resolution**: Combat gauntlet including US CAP Interception, Defensive AA Fire, and Final Attack runs.
+- **Historical Thresholds**: Faithful implementation of dice-base hit numbers (e.g., Torpedoes on 5+, Dive Bombers on 6).
+- **Damage System**: Tracking for Midway Airbase damage and individual Carrier "Sunk" status.
+- **Unit States**: Automated handling of unit Destruction, Aborts, and Mission Success.
+
+### ✅ Turn Track & Recovery
+
+- **Scheduled Returns**: 3-turn delay for returning Japanese aircraft.
+- **Queue Visualization**: T-1, T-2, T-3 recovery slots with visual unit tracking.
+- **Automated Processing**: Deck clearing and status restoration during the Cleanup phase.
+
 ### ✅ User Interface
 
 - **Carrier Command Center**: Visual status for Damage, CAP slots, and Ready Decks.
@@ -74,10 +87,9 @@ kido-butai/
 
 ### 🏗️ In Progress / Planned
 
-- **Strike Engine**: Dice-based combat resolution for air/AA attacks. (Step 4 - UP NEXT)
-- **Cup System**: "Bag draw" mechanics for US unit generation.
-- **Turn Track**: Visualization of returning planes and countdowns.
+- **Cup System**: "Bag draw" mechanics for US unit generation. (Step 6 - UP NEXT)
 - **Scoring**: Automated victory point calculation.
+- **AI Response**: Automated US Task Force counter-attacks.
 
 ## Rules Fidelity
 
