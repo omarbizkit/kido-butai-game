@@ -10,6 +10,7 @@ import { twMerge } from 'tailwind-merge';
 import { calculateScore } from '../engine/scoring';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiceTray } from './DiceTray';
+import { ScenarioSelector } from './ScenarioSelector';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -32,6 +33,8 @@ export const GameBoard: React.FC = () => {
     isGameOver,
     resetGame
   } = useGameStore();
+
+  const [isScenarioOpen, setIsScenarioOpen] = React.useState(false);
 
   const score = calculateScore({ turn, phase, carriers, units, log, isUsFleetFound, isJapanFleetFound, midwayDamage, isGameOver } as GameState);
 
@@ -208,6 +211,13 @@ export const GameBoard: React.FC = () => {
               className="px-8 py-4 bg-white text-black font-black rounded-lg hover:bg-game-gold transition-all uppercase tracking-widest text-sm shadow-xl hover:-translate-y-0.5"
             >
               Advance to {phase === 'CLEANUP' ? 'Next Turn' : 'Next Phase'}
+            </button>
+
+            <button 
+              onClick={() => setIsScenarioOpen(true)}
+              className="px-8 py-4 border-2 border-white/20 text-white/60 font-black rounded-lg hover:border-game-gold hover:text-game-gold transition-all uppercase tracking-widest text-sm"
+            >
+              Historical Scenarios
             </button>
             
             {phase === 'RECON' && (
@@ -403,6 +413,14 @@ export const GameBoard: React.FC = () => {
         </div>
       )}
       <DiceTray />
+      <AnimatePresence>
+        {isScenarioOpen && (
+          <ScenarioSelector 
+            isOpen={isScenarioOpen} 
+            onClose={() => setIsScenarioOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

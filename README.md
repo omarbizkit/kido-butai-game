@@ -23,6 +23,8 @@ A web-based implementation of the tabletop dice game "Kido Butai: Japan's Carrie
 
 - **Premium Tactical Command Console**: Glassmorphic UI with discovery status, animated integrity bars, and high-impact action buttons
 - **Tactile Unit Tokens**: Iconified counters with carrier-specific themes and status pips
+- **High-Fidelity Visuals**: Dynamic dice tray, shaker animations for damaged carriers, and smooth layout-based unit transitions
+- **Historical Engagement Scenarios**: Select presets like "The Fateful Five Minutes" to jump into specific historical contexts
 - **Real-time Combat Log**: Dynamic, color-coded event history with archival styling
 - **Turn Track Visualization**: Sequential recovery cycles for returning aircraft
 - **In-app rules reference**

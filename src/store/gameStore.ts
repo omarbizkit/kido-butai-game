@@ -4,6 +4,7 @@ import { getNextPhase, resolveRecon, canMoveUnit, processTurnTrack, rollDice } f
 import { applyDamage, resolveJapaneseStrike, resolveAmericanStrike } from '../engine/combat';
 import { generateUSStrike } from '../engine/cup';
 import { calculateScore } from '../engine/scoring';
+import { applyScenario } from '../engine/scenarios';
 import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target } from '../types';
 
 interface GameStore extends GameState {
@@ -16,6 +17,7 @@ interface GameStore extends GameState {
   moveUnit: (unitId: string, targetLocation: GameLocation) => void;
   resolveStrikes: () => Promise<void>;
   showVisualRolls: (rolls: number[]) => Promise<void>;
+  loadScenario: (scenarioId: string) => void;
   addLog: (message: string) => void;
   resetGame: () => void;
 }
@@ -283,6 +285,11 @@ export const useGameStore = create<GameStore>()(
           midwayDamage: currentMidwayDamage,
           log: [...newLogs, ...state.log].slice(0, 50)
         });
+      },
+      loadScenario: (scenarioId: string) => {
+        const state = get();
+        const newState = applyScenario(scenarioId, { ...INITIAL_STATE, units: createInitialUnits() } as GameStore);
+        set(newState);
       },
       resetGame: () => set(INITIAL_STATE),
     }),
