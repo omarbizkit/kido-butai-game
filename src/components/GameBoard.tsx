@@ -11,6 +11,7 @@ import { calculateScore } from '../engine/scoring';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiceTray } from './DiceTray';
 import { ScenarioSelector } from './ScenarioSelector';
+import { CarrierProfileModal } from './CarrierProfileModal';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,6 +36,7 @@ export const GameBoard: React.FC = () => {
   } = useGameStore();
 
   const [isScenarioOpen, setIsScenarioOpen] = React.useState(false);
+  const [profileCarrier, setProfileCarrier] = React.useState<JapaneseCarrier | null>(null);
 
   const score = calculateScore({ turn, phase, carriers, units, log, isUsFleetFound, isJapanFleetFound, midwayDamage, isGameOver } as GameState);
 
@@ -81,7 +83,8 @@ export const GameBoard: React.FC = () => {
               x: [0, -10, 10, -10, 10, 0],
               transition: { duration: 0.4 }
             } : {}}
-            className="relative p-4 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col gap-4 shadow-2xl backdrop-blur-md overflow-hidden group/card"
+            onClick={() => setProfileCarrier(carrier.name)}
+            className="relative p-4 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col gap-4 shadow-2xl backdrop-blur-md overflow-hidden group/card cursor-pointer hover:border-game-gold/40 hover:bg-slate-950/60 transition-all"
           >
             {/* Carrier identification stripe */}
             <div className="absolute top-0 right-0 w-16 h-16 opacity-10 pointer-events-none translate-x-8 -translate-y-8 rotate-45 bg-white" />
@@ -418,6 +421,13 @@ export const GameBoard: React.FC = () => {
           <ScenarioSelector 
             isOpen={isScenarioOpen} 
             onClose={() => setIsScenarioOpen(false)} 
+          />
+        )}
+        {profileCarrier && (
+          <CarrierProfileModal
+            carrier={carriers[profileCarrier]}
+            isOpen={!!profileCarrier}
+            onClose={() => setProfileCarrier(null)}
           />
         )}
       </AnimatePresence>

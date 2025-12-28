@@ -109,13 +109,13 @@ kido-butai/
 - **Unit States**: Automated handling of unit Destruction, Aborts, and Mission Success with status piping.
 
 - **High-Fidelity Visuals (Step 10)**: Dynamic Dice Tray with batch rolling, Battle Shakes for damaged carriers, smooth unit transitions (layoutId), and searching pulses for fleet discovery.
+- **Historical Content (Step 11)**: Historical Engagement Scenarios (Presets), Scenario Selection UI, and detailed Carrier Dossier modals with historical flavor text.
 
-### 🏗️ In Progress / Planned (Step 11 - CURRENT)
+### 🏗️ In Progress / Planned (Step 12 - CURRENT)
 
-- **Historical Scenarios**: Setup presets for different historical starting positions (e.g., "The Fateful Five Minutes").
-- **Carrier Profile Modals**: Detailed information and historical flavor text for each carrier when clicked.
-- **Replay System**: Persistence of game logs for post-action assessment.
-- **Technical Debt Phase 4**: Environment-specific lint cleanup.
+- **Replay & Log Persistence**: Enhancing the combat log for post-action assessment and session persistence.
+- **Final Polish**: Smoothing remaining UI edges and comprehensive performance check.
+- **Technical Debt Phase 4**: Final environment-specific lint cleanup.
 
 ## Rules Fidelity
 
