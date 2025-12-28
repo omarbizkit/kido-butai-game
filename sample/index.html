@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kido Butai - Battle of Midway</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .game-board {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            border: 4px solid #1e40af;
+            border-radius: 8px;
+            position: relative;
+            min-height: 600px;
+        }
+        .zone {
+            position: absolute;
+            border: 2px dashed #60a5fa;
+            border-radius: 8px;
+            background: rgba(30, 58, 138, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #93c5fd;
+        }
+        .carrier {
+            position: absolute;
+            border: 2px solid #6b7280;
+            border-radius: 8px;
+            background: #374151;
+            padding: 8px;
+            font-size: 0.75rem;
+            color: white;
+        }
+        .token {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .token:hover {
+            transform: scale(1.1);
+        }
+        .token-fighter { background: #3b82f6; }
+        .token-bomber { background: #f97316; }
+        .token-dummy { background: #6b7280; }
+        .token-japan { border-color: #ef4444; }
+        .token-usa { border-color: #3b82f6; }
+        .dice {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border: 2px solid #9ca3af;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .turn-track {
+            display: flex;
+            gap: 4px;
+            background: #374151;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        .turn-marker {
+            width: 32px;
+            height: 32px;
+            background: #eab308;
+            border-radius: 50%;
+            border: 2px solid #facc15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-blue-900 text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 border-b border-gray-600">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">機動部隊 - Kido Butai</h1>
+                <p class="text-sm text-gray-300">Battle of Midway Carrier Operations</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-sm">
+                    <div>Turn: 04:30 (1/16)</div>
+                    <div class="font-bold text-yellow-400">JAPANESE PHASE</div>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded transition-colors">
+                    Save Game
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Turn Track -->
+    <div class="bg-gray-800 p-2">
+        <div class="max-w-7xl mx-auto">
+            <div class="turn-track">
+                <div class="px-2 py-1 text-xs bg-yellow-500 text-black border border-yellow-400 rounded font-bold">04:30</div>
+                <div class="px-2 py-1 text-xs bg-gray-700 text-gray-300 border border-gray-600 rounded">05:30</div>
+                <div class="px-2 py-1 text-xs bg-gray-700 text-gray-300 border border-gray-600 rounded">06:30</div>
+                <div class="px-2 py-1 text-xs bg-gray-700 text-gray-300 border border-gray-600 rounded">07:30</div>
+                <div class="px-2 py-1 text-xs bg-gray-700 text-gray-300 border border-gray-600 rounded">08:30</div>
+                <div class="turn-marker">1</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen">
+        <!-- Game Board -->
+        <div class="flex-1 p-6">
+            <div class="game-board w-full h-full relative">
+                <!-- Ocean Labels -->
+                <div class="absolute top-4 left-1/2 transform -translate-x-1/2 text-2xl font-bold text-blue-200 opacity-50">
+                    PACIFIC OCEAN
+                </div>
+
+                <!-- Japanese Fleet Area -->
+                <div class="absolute top-12 left-4 text-lg font-bold text-red-300">
+                    JAPANESE FLEET
+                </div>
+
+                <!-- US Fleet Area -->
+                <div class="absolute top-12 right-4 text-lg font-bold text-blue-300">
+                    US TASK FORCE
+                </div>
+
+                <!-- Zones -->
+                <div class="zone" style="left: 10%; top: 25%; width: 80px; height: 60px;">
+                    Akagi Ready
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        <div class="token token-fighter token-japan">✈</div>
+                        <div class="token token-bomber token-japan">⬇</div>
+                    </div>
+                </div>
+                
+                <div class="zone" style="left: 25%; top: 25%; width: 80px; height: 60px;">
+                    Kaga Ready
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        <div class="token token-fighter token-japan">✈</div>
+                        <div class="token token-bomber token-japan">⬇</div>
+                        <div class="token token-bomber token-japan">→</div>
+                    </div>
+                </div>
+
+                <div class="zone" style="left: 40%; top: 25%; width: 80px; height: 60px;">
+                    Soryu Ready
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        <div class="token token-fighter token-japan">✈</div>
+                    </div>
+                </div>
+
+                <div class="zone" style="left: 55%; top: 25%; width: 80px; height: 60px;">
+                    Hiryu Ready
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        <div class="token token-fighter token-japan">✈</div>
+                        <div class="token token-bomber token-japan">⬇</div>
+                    </div>
+                </div>
+
+                <!-- CAP Slots -->
+                <div class="zone" style="left: 10%; top: 45%; width: 60px; height: 60px;">
+                    CAP 1
+                </div>
+                <div class="zone" style="left: 25%; top: 45%; width: 60px; height: 60px;">
+                    CAP 2
+                </div>
+                <div class="zone" style="left: 40%; top: 45%; width: 60px; height: 60px;">
+                    CAP 3
+                </div>
+
+                <!-- Strike Staging -->
+                <div class="zone" style="left: 50%; top: 60%; width: 120px; height: 80px;">
+                    Strike Staging
+                </div>
+
+                <!-- Fleet Zones -->
+                <div class="zone" style="left: 70%; top: 70%; width: 100px; height: 60px;">
+                    Fleet Approach
+                </div>
+                <div class="zone" style="left: 85%; top: 70%; width: 100px; height: 60px;">
+                    Fleet Target
+                </div>
+
+                <!-- Midway Zones -->
+                <div class="zone" style="left: 20%; top: 70%; width: 100px; height: 60px;">
+                    Midway Flight
+                </div>
+                <div class="zone" style="left: 35%; top: 85%; width: 100px; height: 60px;">
+                    Midway Target
+                </div>
+
+                <!-- US Carriers -->
+                <div class="carrier" style="left: 70%; top: 25%;">
+                    <div class="text-center mb-1">
+                        <div class="font-bold">ENTERPRISE</div>
+                        <div class="text-xs text-gray-300">OK (0/4)</div>
+                    </div>
+                    <div class="flex gap-1">
+                        <div class="token token-fighter token-usa">✈</div>
+                        <div class="token token-bomber token-usa">⬇</div>
+                    </div>
+                </div>
+
+                <div class="carrier" style="left: 85%; top: 25%;">
+                    <div class="text-center mb-1">
+                        <div class="font-bold">HORNET</div>
+                        <div class="text-xs text-gray-300">OK (0/4)</div>
+                    </div>
+                    <div class="flex gap-1">
+                        <div class="token token-fighter token-usa">✈</div>
+                        <div class="token token-bomber token-usa">→</div>
+                    </div>
+                </div>
+
+                <!-- Midway Island -->
+                <div class="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-green-800 border-4 border-green-600 rounded-lg p-4 text-center">
+                    <div class="text-lg font-bold">MIDWAY</div>
+                    <div class="text-sm text-green-200">Status: OK (Capacity: 4)</div>
+                </div>
+
+                <!-- Discovery Status -->
+                <div class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white px-3 py-2 rounded text-sm">
+                    <div>Japan Found: ✗</div>
+                    <div>US Found: ✗</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="w-80 bg-gray-100 text-black p-6 space-y-4 overflow-y-auto">
+            <!-- Action Panel -->
+            <div class="bg-white p-4 rounded border">
+                <h3 class="font-bold mb-2">Available Actions</h3>
+                <div class="space-y-2">
+                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors text-sm">
+                        End Japanese Phase
+                    </button>
+                    <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors text-sm">
+                        Launch to CAP (2)
+                    </button>
+                    <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors text-sm">
+                        Launch Strike Package
+                    </button>
+                    <button class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition-colors text-sm">
+                        Roll Reconnaissance
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dice Tray -->
+            <div class="bg-white p-4 rounded border">
+                <h3 class="font-bold mb-2">Dice Tray</h3>
+                <div class="flex items-center justify-center space-x-2 mb-3">
+                    <div class="dice">4</div>
+                    <div class="dice">6</div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">1D6</button>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">2D6</button>
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-sm">3D6</button>
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    Last: 4, 6 = 10
+                </div>
+            </div>
+
+            <!-- Game Status -->
+            <div class="bg-white p-4 rounded border">
+                <h3 class="font-bold mb-2">Game Status</h3>
+                <div class="text-sm space-y-1">
+                    <div>Turn: 04:30 (1/16)</div>
+                    <div>Phase: Japanese</div>
+                    <div>Mode: Hotseat</div>
+                </div>
+            </div>
+
+            <!-- Discovery Status -->
+            <div class="bg-white p-4 rounded border">
+                <h3 class="font-bold mb-2">Discovery Status</h3>
+                <div class="text-sm space-y-1">
+                    <div>Japan found by USA: No</div>
+                    <div>US Fleet found by Japan: No</div>
+                </div>
+            </div>
+
+            <!-- Selected Unit Info -->
+            <div class="bg-yellow-100 p-4 rounded border">
+                <h3 class="font-bold mb-2">Selected Unit</h3>
+                <div class="text-sm">
+                    <div>No unit selected</div>
+                    <div class="text-gray-500">Click a unit token to select</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Log -->
+    <div class="fixed bottom-0 left-0 right-0 h-32 bg-gray-800 text-white overflow-hidden">
+        <div class="p-2 border-b border-gray-600 flex justify-between items-center">
+            <h3 class="font-bold">Game Log</h3>
+            <button class="text-gray-400 hover:text-white">✕</button>
+        </div>
+        <div class="h-full overflow-y-auto p-2 text-sm">
+            <div class="py-1 border-b border-gray-700">[04:30] Game started - Japanese Phase</div>
+            <div class="py-1 border-b border-gray-700">[04:30] Japanese CAP rotated</div>
+            <div class="py-1 border-b border-gray-700">[04:30] Ready for player actions</div>
+        </div>
+    </div>
+
+    <script>
+        // Simple interactive demo
+        document.querySelectorAll('.token').forEach(token => {
+            token.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.token').forEach(t => t.classList.remove('ring-4', 'ring-yellow-400'));
+                
+                // Add selection to clicked token
+                this.classList.add('ring-4', 'ring-yellow-400');
+                
+                // Update selected unit info
+                const unitInfo = document.querySelector('.bg-yellow-100 .text-sm');
+                unitInfo.innerHTML = `
+                    <div>Japan Fighter Squadron</div>
+                    <div class="text-gray-500">Status: Ready | Location: Akagi</div>
+                `;
+            });
+        });
+
+        // Dice rolling simulation
+        document.querySelectorAll('button').forEach(button => {
+            if (button.textContent.includes('D6')) {
+                button.addEventListener('click', function() {
+                    const diceCount = parseInt(this.textContent[0]);
+                    const diceContainer = document.querySelector('.flex.items-center.justify-center.space-x-2');
+                    diceContainer.innerHTML = '';
+                    
+                    for (let i = 0; i < diceCount; i++) {
+                        const die = document.createElement('div');
+                        die.className = 'dice';
+                        die.textContent = Math.floor(Math.random() * 6) + 1;
+                        diceContainer.appendChild(die);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
