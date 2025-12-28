@@ -93,6 +93,60 @@ export const resolveJapaneseStrike = (
   return result;
 };
 
+export const resolveAmericanStrike = (
+  unit: Unit,
+  targetCarrier: JapaneseCarrier,
+  state: GameState
+): CombatResult => {
+  const result: CombatResult = {
+    attackerId: unit.id,
+    target: targetCarrier,
+    rolls: [],
+    hits: 0,
+    aborted: false,
+    destroyed: false,
+  };
+
+  // 1. Japan CAP Interception
+  // Check if any Fighters are on CAP for this carrier
+  const capUnitId = state.carriers[targetCarrier].capSlots.find(s => s !== null);
+  if (capUnitId) {
+    const [roll] = rollDice(1);
+    result.rolls.push(roll);
+    // Japan CAP vs US Bomber: 5+ destroy, 3-4 abort
+    if (unit.type !== 'FIGHTER') {
+      if (roll >= 5) result.destroyed = true;
+      else if (roll >= 3) result.aborted = true;
+    } else {
+      // Fighter vs Fighter: 5+ destroy
+      if (roll >= 5) result.destroyed = true;
+    }
+    
+    if (result.destroyed || result.aborted) return result;
+  }
+
+  // 2. Japanese AA
+  // Simplified: 6 aborts
+  const [aaRoll] = rollDice(1);
+  result.rolls.push(aaRoll);
+  if (unit.type !== 'FIGHTER' && aaRoll >= 6) {
+    result.aborted = true;
+    return result;
+  }
+
+  // 3. Attack Run
+  const [attackRoll] = rollDice(1);
+  result.rolls.push(attackRoll);
+
+  if (unit.type === 'DIVE_BOMBER') {
+    if (attackRoll >= 6) result.hits = 1;
+  } else if (unit.type === 'TORPEDO_BOMBER') {
+    if (attackRoll >= 5) result.hits = 1;
+  }
+
+  return result;
+};
+
 export const applyDamage = (
   target: Target,
   hits: number,

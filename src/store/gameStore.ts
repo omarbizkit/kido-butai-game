@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getNextPhase, resolveRecon, canMoveUnit, processTurnTrack } from '../engine/rules';
-import { applyDamage, resolveJapaneseStrike } from '../engine/combat';
+import { applyDamage, resolveJapaneseStrike, resolveAmericanStrike } from '../engine/combat';
+import { generateUSStrike } from '../engine/cup';
 import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target } from '../types';
 
 interface GameStore extends GameState {
@@ -10,6 +11,7 @@ interface GameStore extends GameState {
   setPhase: (phase: Phase) => void;
   setNextPhase: () => void;
   performRecon: () => void;
+  performAmericanStrike: () => void;
   moveUnit: (unitId: string, targetLocation: GameLocation) => void;
   resolveStrikes: () => void;
   addLog: (message: string) => void;
@@ -81,7 +83,8 @@ export const useGameStore = create<GameStore>()(
 
         if (result.nextPhase === 'CLEANUP') {
           const recovery = processTurnTrack(state.units);
-          updates.units = recovery.units;
+          // Also remove all US units from the board
+          updates.units = recovery.units.filter(u => u.owner === 'JAPAN');
           updates.log = [...recovery.log, ...updates.log!];
         }
 
@@ -96,6 +99,47 @@ export const useGameStore = create<GameStore>()(
           ...others,
           log: [...log, ...prev.log].slice(0, 50)
         }));
+      },
+      performAmericanStrike: () => {
+        const state = get();
+        if (state.phase !== 'AMERICAN') return;
+        
+        const { units: usUnits, log: usLog } = generateUSStrike();
+        let currentCarriers = { ...state.carriers };
+        let newLogs = [...usLog];
+
+        const carriersArr: JapaneseCarrier[] = ['AKAGI', 'KAGA', 'HIRYU', 'SORYU'];
+        const activeCarriers = carriersArr.filter(c => !currentCarriers[c].isSunk);
+
+        if (activeCarriers.length === 0) {
+          set({ log: ['No Japanese carriers left for US to target!', ...state.log].slice(0, 50) });
+          return;
+        }
+
+        const usResults = usUnits.map(u => {
+          const target = activeCarriers[Math.floor(Math.random() * activeCarriers.length)];
+          const result = resolveAmericanStrike(u, target, state);
+          
+          if (result.destroyed) {
+            newLogs.push(`US ${u.type} shot down by CAP!`);
+          } else if (result.aborted) {
+            newLogs.push(`US ${u.type} aborted attack due to AA/CAP.`);
+          } else {
+            newLogs.push(`US ${u.type} rolls vs ${target}: ${result.hits} hit(s)`);
+            if (result.hits > 0) {
+              const damageResult = applyDamage(target, result.hits, { ...state, carriers: currentCarriers });
+              if (damageResult.carriers) currentCarriers = damageResult.carriers;
+              newLogs.push(...damageResult.log);
+            }
+          }
+          return u;
+        });
+
+        set({
+          carriers: currentCarriers,
+          units: [...state.units, ...usUnits], // Temporarily add them to show in UI
+          log: [...newLogs, ...state.log].slice(0, 50)
+        });
       },
       moveUnit: (unitId: string, targetLocation: GameLocation) => {
         const state = get();

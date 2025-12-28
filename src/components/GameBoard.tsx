@@ -24,7 +24,8 @@ export const GameBoard: React.FC = () => {
     midwayDamage,
     selectedUnitId,
     moveUnit,
-    resolveStrikes
+    resolveStrikes,
+    performAmericanStrike
   } = useGameStore();
 
   const getUnitsAtLocation = (location: string) => {
@@ -134,6 +135,14 @@ export const GameBoard: React.FC = () => {
                 )}
               >
                 Commence Strike
+              </button>
+            )}
+            {phase === 'AMERICAN' && (
+              <button 
+                onClick={() => performAmericanStrike()}
+                className="px-6 py-3 border-2 border-orange-500 text-orange-500 font-black rounded hover:bg-orange-500 hover:text-white transition-all uppercase tracking-tighter"
+              >
+                Weather the Storm
               </button>
             )}
           </div>

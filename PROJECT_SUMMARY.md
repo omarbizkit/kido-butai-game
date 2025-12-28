@@ -77,6 +77,13 @@ kido-butai/
 - **Queue Visualization**: T-1, T-2, T-3 recovery slots with visual unit tracking.
 - **Automated Processing**: Deck clearing and status restoration during the Cleanup phase.
 
+### ✅ American Response & Cup System
+
+- **Bag Draw Simulator**: Randomized US strike packages using a historically-weighted "dummy token" pull logic.
+- **Automated AI Attacks**: System-driven targeting of active Japanese carriers during the American phase.
+- **Dynamic Combat Logic**: Context-aware defense resolution (US Interception vs Japan CAP, AA vs Bombers).
+- **Transient US Units**: US aircraft appear only during strike resolution and are cleaned up at turn-end.
+
 ### ✅ User Interface
 
 - **Carrier Command Center**: Visual status for Damage, CAP slots, and Ready Decks.
@@ -87,9 +94,9 @@ kido-butai/
 
 ### 🏗️ In Progress / Planned
 
-- **Cup System**: "Bag draw" mechanics for US unit generation. (Step 6 - UP NEXT)
-- **Scoring**: Automated victory point calculation.
-- **AI Response**: Automated US Task Force counter-attacks.
+- **Scoring**: Automated victory point calculation and rank assessment. (Step 7 - UP NEXT)
+- **Game Over Transitions**: Comprehensive victory/defeat screens based on historical outcomes.
+- **Replay System**: Persistence of game logs for post-action assessment.
 
 ## Rules Fidelity
 
