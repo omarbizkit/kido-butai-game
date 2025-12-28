@@ -21,8 +21,10 @@ export const GameBoard: React.FC = () => {
     log, 
     isUsFleetFound, 
     isJapanFleetFound,
+    midwayDamage,
     selectedUnitId,
-    moveUnit
+    moveUnit,
+    resolveStrikes
   } = useGameStore();
 
   const getUnitsAtLocation = (location: string) => {
@@ -121,9 +123,22 @@ export const GameBoard: React.FC = () => {
                 Launch Scouts
               </button>
             )}
+            {phase === 'JAPANESE' && (
+              <button 
+                onClick={() => resolveStrikes()}
+                className={cn(
+                  "px-6 py-3 border-2 font-black rounded transition-all uppercase tracking-tighter",
+                  getUnitsAtLocation('STAGING').length > 0 || getUnitsAtLocation('MIDWAY_FLIGHT').length > 0
+                    ? "border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    : "border-slate-700 text-slate-700 cursor-not-allowed"
+                )}
+              >
+                Commence Strike
+              </button>
+            )}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div 
               onClick={() => handleLocationClick('STAGING')}
               className={cn(
@@ -158,6 +173,16 @@ export const GameBoard: React.FC = () => {
                   <UnitToken key={u.id} unit={u} />
                 ))}
               </div>
+            </div>
+
+            <div className="p-4 rounded-xl border-2 border-slate-700 bg-slate-900 flex flex-col items-center justify-center gap-2">
+              <span className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">Midway Airbase Damage</span>
+              <div className="flex gap-1 justify-center">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className={cn("w-4 h-4 rounded-sm transition-all", i < midwayDamage ? "bg-red-500 shadow-[0_0_8px_#ef4444]" : "bg-slate-800 border border-slate-700")} />
+                ))}
+              </div>
+              <span className="text-2xl font-black text-white">{midwayDamage}/6</span>
             </div>
           </div>
 

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { getNextPhase, resolveRecon, canMoveUnit } from '../engine/rules';
-import { GameLocation, GameState, JapaneseCarrier, Phase, Unit } from '../types';
+import { applyDamage, resolveJapaneseStrike } from '../engine/combat';
+import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target } from '../types';
 
 interface GameStore extends GameState {
   selectedUnitId: string | null;
@@ -10,6 +11,7 @@ interface GameStore extends GameState {
   setNextPhase: () => void;
   performRecon: () => void;
   moveUnit: (unitId: string, targetLocation: GameLocation) => void;
+  resolveStrikes: () => void;
   addLog: (message: string) => void;
   resetGame: () => void;
 }
@@ -126,6 +128,57 @@ export const useGameStore = create<GameStore>()(
           carriers, 
           selectedUnitId: null,
           log: [`Squadron ${unitId} moved to ${targetLocation}`, ...state.log].slice(0, 50)
+        });
+      },
+      resolveStrikes: () => {
+        const state = get();
+        if (state.phase !== 'JAPANESE') return;
+
+        const unitsToStrike = state.units.filter(u => 
+          u.location === 'STAGING' || u.location === 'MIDWAY_FLIGHT'
+        );
+
+        if (unitsToStrike.length === 0) return;
+
+        let currentCarriers = { ...state.carriers };
+        let currentMidwayDamage = state.midwayDamage;
+        let newLogs: string[] = ['--- Resolving Japanese Strikes ---'];
+        
+        const newUnits = state.units.map(u => {
+          if (u.location === 'STAGING' || u.location === 'MIDWAY_FLIGHT') {
+            const target: Target = u.location === 'STAGING' ? 'US_TF' : 'MIDWAY';
+            const result = resolveJapaneseStrike(u, target, state);
+            
+            if (result.destroyed) {
+              newLogs.push(`CRITICAL: ${u.id} (${u.type}) intercepted and DESTROYED! (Roll: ${result.rolls[0]})`);
+              return { ...u, status: 'DESTROYED' as const, location: 'POOL' as GameLocation };
+            }
+
+            if (result.aborted) {
+              newLogs.push(`${u.id} (${u.type}) ABORTED mission and returning. (Rolls: ${result.rolls.join(',')})`);
+              return { ...u, status: 'RETURNING' as const, location: 'TURN_TRACK' as GameLocation };
+            }
+
+            newLogs.push(`${u.id} (${u.type}) rolls ${result.rolls.join(',')} vs ${target}: ${result.hits} hit(s)`);
+            
+            if (result.hits > 0) {
+              const damageResult = applyDamage(target, result.hits, { ...state, carriers: currentCarriers, midwayDamage: currentMidwayDamage });
+              if (damageResult.carriers) currentCarriers = damageResult.carriers;
+              if (damageResult.midwayDamage !== undefined) currentMidwayDamage = damageResult.midwayDamage;
+              newLogs.push(...damageResult.log);
+            }
+
+            // After strike, unit returns (simulated by moving to TURN_TRACK)
+            return { ...u, location: 'TURN_TRACK' as GameLocation, status: 'RETURNING' as const };
+          }
+          return u;
+        });
+
+        set({
+          units: newUnits,
+          carriers: currentCarriers,
+          midwayDamage: currentMidwayDamage,
+          log: [...newLogs, ...state.log].slice(0, 50)
         });
       },
       resetGame: () => set(INITIAL_STATE),

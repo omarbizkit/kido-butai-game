@@ -1,3 +1,15 @@
+export type AttackType = 'BOMB' | 'TORPEDO' | 'FIGHTER';
+export type Target = JapaneseCarrier | 'MIDWAY' | 'US_TF';
+
+export interface CombatResult {
+  attackerId: string;
+  target: Target;
+  rolls: number[];
+  hits: number;
+  aborted: boolean;
+  destroyed: boolean;
+}
+
 export type Phase = 'JAPANESE' | 'RECON' | 'AMERICAN' | 'CLEANUP';
 
 export type JapaneseCarrier = 'AKAGI' | 'KAGA' | 'HIRYU' | 'SORYU';
