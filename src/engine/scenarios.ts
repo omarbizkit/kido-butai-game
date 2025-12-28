@@ -1,4 +1,5 @@
 import { Scenario, GameState, Unit, UnitStatus, GameLocation } from '../types';
+import { logsToEntries } from '../utils/log';
 
 export const SCENARIOS: Scenario[] = [
   {
@@ -23,7 +24,7 @@ export const SCENARIOS: Scenario[] = [
       phase: 'AMERICAN',
       midwayDamage: 8,
       isUsFleetFound: true,
-      log: ['HISTORICAL: 10:25 AM. US SBD Dauntlesses are beginning their dives!', 'All Japanese carriers have bombers spotted on deck!'],
+      log: logsToEntries(['HISTORICAL: 10:25 AM. US SBD Dauntlesses are beginning their dives!', 'All Japanese carriers have bombers spotted on deck!'], 'HISTORICAL'),
     }
   },
   {
@@ -38,7 +39,7 @@ export const SCENARIOS: Scenario[] = [
       midwayDamage: 10,
       isUsFleetFound: true,
       isJapanFleetFound: true,
-      log: ['HISTORICAL: 14:30 PM. Hiryu stands alone against the US fleet.', 'Avenge the Kido Butai!'],
+      log: logsToEntries(['HISTORICAL: 14:30 PM. Hiryu stands alone against the US fleet.', 'Avenge the Kido Butai!'], 'HISTORICAL'),
     }
   }
 ];

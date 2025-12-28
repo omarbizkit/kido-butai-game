@@ -3,7 +3,7 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 
-import { CarrierState, Unit, JapaneseCarrier, GameLocation, GameState } from '../types';
+import { CarrierState, Unit, JapaneseCarrier, GameLocation, GameState, LogEntry } from '../types';
 import { UnitToken } from './UnitToken';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -330,16 +330,19 @@ export const GameBoard: React.FC = () => {
             <span className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Archives</span>
           </div>
           <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar max-h-[500px]">
-            {log.map((entry: string, i: number) => (
-              <div key={i} className={cn(
-                "font-mono text-[11px] leading-relaxed border-l-2 pl-3 py-1.5 transition-colors",
-                entry.startsWith('---') ? "text-game-gold border-game-gold/50 bg-game-gold/5 font-black uppercase tracking-tight py-2 my-2 border-l-4" : 
-                entry.includes('CRITICAL') ? "text-red-400 border-red-500/50 bg-red-500/5 animate-pulse" :
-                entry.includes('SUNK') ? "text-red-600 border-red-600 font-black italic underline" :
-                "text-slate-400 border-slate-800 hover:text-white"
+            {log.map((entry: LogEntry) => (
+              <div key={entry.id} className={cn(
+                "font-mono text-[11px] leading-relaxed border-l-2 pl-3 py-1.5 transition-all group",
+                entry.type === 'SYSTEM' ? "text-game-gold border-game-gold/50 bg-game-gold/5 font-black uppercase tracking-tight py-2 my-2 border-l-4" : 
+                entry.type === 'COMBAT' ? (entry.message.includes('CRITICAL') || entry.message.includes('SUNK') ? "text-red-400 border-red-500 bg-red-500/10 font-bold" : "text-red-400/80 border-red-900/40") :
+                entry.type === 'RECON' ? "text-emerald-400 border-emerald-900/40" :
+                entry.type === 'HISTORICAL' ? "text-blue-400 border-blue-500 bg-blue-500/5 italic" :
+                "text-slate-400 border-slate-800 hover:border-slate-600 hover:text-white"
               )}>
-                <span className="opacity-20 mr-2 text-[8px] font-bold">[{log.length - i}]</span>
-                {entry}
+                <div className="flex justify-between items-start">
+                  <span className="flex-1">{entry.message}</span>
+                  <span className="opacity-0 group-hover:opacity-40 text-[8px] font-black uppercase ml-2 whitespace-nowrap">{entry.timestamp}</span>
+                </div>
               </div>
             ))}
           </div>

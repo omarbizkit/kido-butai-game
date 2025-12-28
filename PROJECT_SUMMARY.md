@@ -86,8 +86,10 @@ kido-butai/
 
 ### ✅ Scoring & Victory Conditions
 
-- **Historical Assessment Engine**: Mathematical conversion of game outcomes into historical ratings (Major Victory to Major Defeat).
-- **Point Gauntlet**: Comprehensive scoring including Midway damage, carrier hits, and aerial attrition.
+- **Scenario System:** Historical scenarios with custom initial states (e.g. Fateful Five Minutes).
+- **Tactical Dossier:** Detailed historical carrier profiles with custom-generated artistic assets.
+- **Premium Aesthetics:** Navy/Gold theme with glassmorphism and cinematic animations.
+- **Log Engine:** Comprehensive session tracking with `LogEntry` architecture.
 - **Game Over Transitions**: Interactive mission reports with detailed point breakdowns and outcome analysis.
 - **Auto-Termination**: Game correctly identifies end-states (all carriers sunk or 19:30 reached).
 
@@ -111,11 +113,12 @@ kido-butai/
 - **High-Fidelity Visuals (Step 10)**: Dynamic Dice Tray with batch rolling, Battle Shakes for damaged carriers, smooth unit transitions (layoutId), and searching pulses for fleet discovery.
 - **Historical Content (Step 11)**: Historical Engagement Scenarios (Presets), Scenario Selection UI, and detailed Carrier Dossier modals with historical flavor text.
 
-### 🏗️ In Progress / Planned (Step 12 - CURRENT)
+### Step 12: Final Polish & Systems Upgrade ✅
 
-- **Replay & Log Persistence**: Enhancing the combat log for post-action assessment and session persistence.
-- **Final Polish**: Smoothing remaining UI edges and comprehensive performance check.
-- **Technical Debt Phase 4**: Final environment-specific lint cleanup.
+- **Rich Log History:** Upgraded the combat log to a full `LogEntry` system with timestamps and type-based styling.
+- **Dossier System:** Enhanced carrier profiles with premium tactical dossier imagery and expanded historical data.
+- **UI/UX Refinement:** Polished all modals with glassmorphism, background artistic overlays, and improved typography.
+- **Stability:** Cleaned up type inconsistencies in the store and engine.
 
 ## Rules Fidelity
 

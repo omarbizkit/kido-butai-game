@@ -27,9 +27,7 @@ You are an expert full-stack developer and game designer specializing in digital
 - `src/components/`: Reusable UI components.
 - `src/types/`: Centralized TypeScript interfaces.
 
-## Current Objective
-
-- **Step 12 (Final Polish)**: Enhance combat log persistence, implement replay/review system, and resolve remaining technical debt.
+## Current Phase: V1 Complete (Final Polish Delivered)
 
 ---
 

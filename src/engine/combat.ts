@@ -1,4 +1,4 @@
-import { Unit, GameState, CombatResult, Target, AttackType, JapaneseCarrier } from '../types';
+import { GameState, Unit, JapaneseCarrier, Target, UnitStatus, GameLocation, CombatResult, AttackType } from '../types';
 import { rollDice } from './rules';
 
 export const resolveAA = (unit: Unit): { aborted: boolean; roll: number } => {

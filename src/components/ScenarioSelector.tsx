@@ -4,8 +4,13 @@ import { SCENARIOS } from '../engine/scenarios';
 import { useGameStore } from '../store/gameStore';
 import { Book, Clock, MapPin, Target } from 'lucide-react';
 
-export const ScenarioSelector: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const loadScenario = useGameStore(state => state.loadScenario);
+interface ScenarioSelectorProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const ScenarioSelector: React.FC<ScenarioSelectorProps> = ({ isOpen, onClose }) => {
+  const loadScenario = useGameStore((state: any) => state.loadScenario);
 
   if (!isOpen) return null;
 

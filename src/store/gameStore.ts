@@ -5,7 +5,8 @@ import { applyDamage, resolveJapaneseStrike, resolveAmericanStrike } from '../en
 import { generateUSStrike } from '../engine/cup';
 import { calculateScore } from '../engine/scoring';
 import { applyScenario } from '../engine/scenarios';
-import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target } from '../types';
+import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target, LogEntry } from '../types';
+import { createLogEntry, logsToEntries } from '../utils/log';
 
 interface GameStore extends GameState {
   selectedUnitId: string | null;
@@ -55,7 +56,7 @@ const INITIAL_STATE: GameState = {
   midwayDamage: 0,
   isUsFleetFound: false,
   isJapanFleetFound: false,
-  log: ['Game started at 04:30'],
+  log: [createLogEntry('Game started at 04:30', 'SYSTEM')],
   isGameOver: false,
 };
 
@@ -66,14 +67,16 @@ export const useGameStore = create<GameStore>()(
       selectedUnitId: null,
       selectUnit: (id: string | null) => set({ selectedUnitId: id }),
       setPhase: (phase: Phase) => set({ phase }),
-      addLog: (message: string) => set((state: GameState) => ({ log: [message, ...state.log].slice(0, 50) })),
+      addLog: (message: string, type: LogEntry['type'] = 'SYSTEM') => set((state: GameState) => ({ 
+        log: [createLogEntry(message, type), ...state.log].slice(0, 200) 
+      })),
       setNextPhase: () => {
         const state = get();
         const result = getNextPhase(state.phase, state.turnIndex);
         
         const updates: Partial<GameState> & { selectedUnitId: null } = {
           phase: result.nextPhase,
-          log: [...result.logEntries, ...state.log].slice(0, 50),
+          log: [...logsToEntries(result.logEntries), ...state.log].slice(0, 200),
           selectedUnitId: null
         };
 
@@ -82,20 +85,20 @@ export const useGameStore = create<GameStore>()(
           if (nextIndex < TURNS.length) {
             updates.turnIndex = nextIndex;
             updates.turn = TURNS[nextIndex];
-            updates.log = [`--- Turn ${TURNS[nextIndex]} ---`, ...updates.log!];
+            updates.log = [createLogEntry(`--- Turn ${TURNS[nextIndex]} ---`, 'SYSTEM'), ...updates.log!];
           }
         }
 
         if (result.nextPhase === 'CLEANUP') {
           const recovery = processTurnTrack(state.units);
           updates.units = recovery.units.filter(u => u.owner === 'JAPAN');
-          updates.log = [...recovery.log, ...updates.log!];
+          updates.log = [...logsToEntries(recovery.log), ...updates.log!];
         }
 
         const scoreCheck = calculateScore({ ...state, ...updates } as GameState);
         if (scoreCheck.isGameOver) {
           updates.isGameOver = true;
-          updates.log = [`--- GAME OVER: ${scoreCheck.rating} ---`, ...updates.log!];
+          updates.log = [createLogEntry(`--- GAME OVER: ${scoreCheck.rating} ---`, 'SYSTEM'), ...updates.log!];
         }
 
         set(updates);
@@ -124,7 +127,7 @@ export const useGameStore = create<GameStore>()(
         set((prev: GameStore) => ({
           ...prev,
           ...others,
-          log: [...log, ...prev.log].slice(0, 50)
+          log: [...logsToEntries(log, 'RECON'), ...prev.log].slice(0, 200)
         }));
       },
       performAmericanStrike: async () => {
@@ -139,7 +142,7 @@ export const useGameStore = create<GameStore>()(
         const activeCarriers = carriersArr.filter(c => !currentCarriers[c].isSunk);
 
         if (activeCarriers.length === 0) {
-          set({ log: ['No Japanese carriers left for US to target!', ...state.log].slice(0, 50) });
+          set({ log: [createLogEntry('No Japanese carriers left for US to target!', 'SYSTEM'), ...state.log].slice(0, 200) });
           return;
         }
 
@@ -187,7 +190,7 @@ export const useGameStore = create<GameStore>()(
 
         set({
           carriers: currentCarriers,
-          log: [...newLogs, ...state.log].slice(0, 50)
+          log: [...logsToEntries(newLogs, 'COMBAT'), ...state.log].slice(0, 200)
         });
       },
       moveUnit: (unitId: string, targetLocation: GameLocation) => {
@@ -197,7 +200,9 @@ export const useGameStore = create<GameStore>()(
 
         const validation = canMoveUnit(unit, targetLocation, state);
         if (!validation.allowed) {
-          set((s: GameStore) => ({ log: [`Order rejected: ${validation.reason}`, ...s.log].slice(0, 50) }));
+          set((s: GameStore) => ({ 
+            log: [createLogEntry(`Order rejected: ${validation.reason}`, 'SYSTEM'), ...s.log].slice(0, 200) 
+          }));
           return;
         }
 
@@ -226,7 +231,7 @@ export const useGameStore = create<GameStore>()(
           units: newUnits, 
           carriers, 
           selectedUnitId: null,
-          log: [`Squadron ${unitId} moved to ${targetLocation}`, ...state.log].slice(0, 50)
+          log: [createLogEntry(`Squadron ${unitId} moved to ${targetLocation}`, 'MOVEMENT'), ...state.log].slice(0, 200)
         });
       },
       resolveStrikes: async () => {
@@ -283,11 +288,10 @@ export const useGameStore = create<GameStore>()(
           units: newUnits,
           carriers: currentCarriers,
           midwayDamage: currentMidwayDamage,
-          log: [...newLogs, ...state.log].slice(0, 50)
+          log: [...logsToEntries(newLogs, 'COMBAT'), ...state.log].slice(0, 200)
         });
       },
       loadScenario: (scenarioId: string) => {
-        const state = get();
         const newState = applyScenario(scenarioId, { ...INITIAL_STATE, units: createInitialUnits() } as GameStore);
         set(newState);
       },

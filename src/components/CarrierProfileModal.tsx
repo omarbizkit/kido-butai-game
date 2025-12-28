@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { JapaneseCarrier, CarrierState } from '../types';
 import { CARRIER_DATA } from '../data/carriers';
-import { Shield, Target, Activity, Anchor, ChevronRight } from 'lucide-react';
+import { Shield, Target, Activity, Anchor, ChevronRight, Book } from 'lucide-react';
 
 interface Props {
   carrier: CarrierState;
@@ -31,8 +31,16 @@ export const CarrierProfileModal: React.FC<Props> = ({ carrier, isOpen, onClose 
         exit={{ opacity: 0, scale: 0.9, x: 20 }}
         className="relative w-full max-w-5xl bg-slate-900 border border-game-gold/30 rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
       >
+        {/* Background Image Overlay */}
+        <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+          <img 
+            src="/japanese_carrier_dossier_art.png" 
+            alt="Historical Background" 
+            className="w-full h-full object-cover grayscale brightness-200"
+          />
+        </div>
         {/* Left: Imagery/Stats Side */}
-        <div className="md:w-1/3 bg-slate-950/50 border-r border-white/5 p-8 flex flex-col">
+        <div className="relative z-10 md:w-1/3 bg-slate-950/60 backdrop-blur-md border-r border-white/5 p-8 flex flex-col">
           <div className="mb-8">
             <h2 className="text-4xl font-black text-white uppercase tracking-tighter italic leading-none">{data.name}</h2>
             <p className="text-game-gold font-mono text-xs uppercase tracking-[0.3em] font-bold mt-2">{data.hullNumber}</p>
@@ -73,7 +81,7 @@ export const CarrierProfileModal: React.FC<Props> = ({ carrier, isOpen, onClose 
         </div>
 
         {/* Right: Detailed Info */}
-        <div className="flex-1 p-10 overflow-y-auto">
+        <div className="relative z-10 flex-1 p-10 overflow-y-auto bg-slate-900/40 backdrop-blur-sm">
           <div className="flex items-center gap-3 mb-8">
              <div className="h-0.5 flex-1 bg-gradient-to-r from-game-gold/50 to-transparent" />
              <div className="px-3 py-1 bg-game-gold/10 rounded-full border border-game-gold/20">

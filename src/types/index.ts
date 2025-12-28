@@ -58,10 +58,17 @@ export interface GameState {
   midwayDamage: number;
   isUsFleetFound: boolean;
   isJapanFleetFound: boolean;
-  log: string[];
+  log: LogEntry[];
   isGameOver: boolean;
   activeRolls?: number[];
   currentScenario?: string;
+}
+
+export interface LogEntry {
+  id: string;
+  timestamp: string;
+  message: string;
+  type: 'COMBAT' | 'RECON' | 'MOVEMENT' | 'SYSTEM' | 'HISTORICAL';
 }
 
 export type Scenario = {
