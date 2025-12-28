@@ -29,7 +29,7 @@ You are an expert full-stack developer and game designer specializing in digital
 
 ## Current Objective
 
-- **Step 11 (Historical Scenarios)**: Implement setup presets for different historical starting positions (e.g., "The Fateful Five Minutes") and carrier profile modals.
+- **Step 12 (Final Polish)**: Enhance combat log persistence, implement replay/review system, and resolve remaining technical debt.
 
 ---
 
