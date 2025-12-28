@@ -2,6 +2,28 @@ import { Phase, GameState, GameLocation, Unit } from '../types';
 
 export const PHASES: Phase[] = ['JAPANESE', 'RECON', 'AMERICAN', 'CLEANUP'];
 
+export const processTurnTrack = (units: Unit[]): { units: Unit[]; log: string[] } => {
+  const log: string[] = [];
+  const nextUnits = units.map(u => {
+    if (u.location === 'TURN_TRACK' && u.turnsUntilReady !== undefined) {
+      const nextTurns = u.turnsUntilReady - 1;
+      if (nextTurns <= 0) {
+        log.push(`${u.id} returned to ${u.carrier || 'Ready Deck'} and is now combat ready.`);
+        return {
+          ...u,
+          location: u.carrier as GameLocation || 'POOL',
+          status: 'READY' as const,
+          turnsUntilReady: undefined
+        };
+      }
+      return { ...u, turnsUntilReady: nextTurns };
+    }
+    return u;
+  });
+
+  return { units: nextUnits, log };
+};
+
 export interface RulesResult {
   nextPhase: Phase;
   shouldAdvanceTurn: boolean;
