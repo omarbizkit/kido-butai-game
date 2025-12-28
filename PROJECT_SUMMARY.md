@@ -1,6 +1,7 @@
 # Kido Butai Web App - Project Summary
 
 ## Overview
+
 A complete, production-ready web application implementing the tabletop dice game "Kido Butai: Japan's Carriers at Midway" with faithful rule preservation and modern web technologies.
 
 ## Project Structure
@@ -48,48 +49,42 @@ kido-butai/
 
 ## Key Features Implemented
 
+### ✅ Foundation & State
+
+- Next.js 14 / TypeScript / TailwindCSS environment setup.
+- Zustand store with full state persistence (`localStorage`).
+- Comprehensive TypeScript interfaces for carriers, units, phases, and locations.
+
 ### ✅ Core Game Logic
-- Complete turn sequence (04:30 - 19:30)
-- All four game phases with proper transitions
-- Hidden information via cup/bag draw system
-- Dice-based combat resolution with authentic tables
-- Carrier damage states and capacity reduction
-- Turn track scheduling for returning aircraft
+
+- **Phase Engine**: Operational cycle (JAPANESE → RECON → AMERICAN → CLEANUP).
+- **Time Progression**: 1-hour turn increments (04:30 - 19:30).
+- **Historical Logic**: Automatic skip of American phase in early turns.
+- **Recon System**: Dice-based spotting mechanics for both Kido Butai and US Task Force.
+- **Movement Engine**: Command system for moving units between Ready Decks, CAP, and Staging.
+- **Validation Rules**: Type-specific movement restrictions (e.g., only Fighters to CAP).
 
 ### ✅ User Interface
-- Visual game board with proper zone layout
-- Drag-and-drop unit movement
-- Animated dice rolling
-- Real-time game log
-- Turn track visualization
-- In-app rules reference
-- Responsive design for desktop/tablet
 
-### ✅ State Management
-- Zustand store with persistence
-- Immutable state updates
-- Action history tracking
-- Save/load game functionality
-- Export/import JSON format
+- **Carrier Command Center**: Visual status for Damage, CAP slots, and Ready Decks.
+- **Unit Tokens**: Sleek, iconified representations of squadrons with status indicators.
+- **Strategy Council**: Contextual action panel for phase transitions and recon.
+- **Real-time Log**: History of all game events and dice rolls.
+- **Responsive Layout**: Premium dark-mode aesthetic with reactive zone highlighting.
 
-### ✅ Game Modes
-- Hotseat (2-player on same device)
-- Solo mode with rule assistance
-- Strict manual mode with validation
+### 🏗️ In Progress / Planned
 
-### ✅ Technical Excellence
-- TypeScript for type safety
-- Next.js 14 with App Router
-- TailwindCSS for styling
-- Jest testing framework
-- Accessibility features
-- Modern web standards
+- **Strike Engine**: Dice-based combat resolution for air/AA attacks. (Step 4 - UP NEXT)
+- **Cup System**: "Bag draw" mechanics for US unit generation.
+- **Turn Track**: Visualization of returning planes and countdowns.
+- **Scoring**: Automated victory point calculation.
 
 ## Rules Fidelity
 
 The implementation preserves original tabletop rules:
 
 ### Combat Tables (from Player Aid)
+
 - Japanese Fighter vs US CAP: 5+ hit
 - US CAP vs Japanese Fighter: 6 hit
 - US CAP vs Japanese Bomber: 5+ hit, 3-4 abort
@@ -99,6 +94,7 @@ The implementation preserves original tabletop rules:
 - All corresponding US attack tables
 
 ### Special Rules
+
 - Low CAP status and timing effects
 - Normal vs Special attack conditions
 - Carrier damage and capacity reduction
@@ -106,6 +102,7 @@ The implementation preserves original tabletop rules:
 - Scoring with correct multipliers
 
 ### Digital Adaptations
+
 - Counter rotation → Status indicators and timers
 - Physical cups → Bag draws without replacement
 - Manual tracking → Automated systems
@@ -114,18 +111,21 @@ The implementation preserves original tabletop rules:
 ## Quality Assurance
 
 ### Testing
+
 - Unit tests for rules engine
 - State management tests
 - Component rendering tests
 - Integration tests for game flow
 
 ### Code Quality
+
 - TypeScript for type safety
 - ESLint for code standards
 - Consistent code formatting
 - Comprehensive documentation
 
 ### Performance
+
 - Efficient state updates
 - Optimized rendering
 - Minimal bundle size
@@ -134,6 +134,7 @@ The implementation preserves original tabletop rules:
 ## Deployment Ready
 
 The application is production-ready and can be deployed to:
+
 - Vercel (recommended for Next.js)
 - Netlify
 - AWS Amplify
@@ -143,6 +144,7 @@ The application is production-ready and can be deployed to:
 ## Usage Instructions
 
 ### Development
+
 ```bash
 npm install
 npm run dev
@@ -150,12 +152,14 @@ npm run dev
 ```
 
 ### Production Build
+
 ```bash
 npm run build
 npm start
 ```
 
 ### Testing
+
 ```bash
 npm test
 npm run test:watch
@@ -164,6 +168,7 @@ npm run test:watch
 ## Future Enhancements
 
 Potential additions for expanded functionality:
+
 - Online multiplayer support
 - AI opponent implementation
 - Additional rule variants

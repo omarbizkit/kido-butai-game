@@ -4,14 +4,27 @@ export type JapaneseCarrier = 'AKAGI' | 'KAGA' | 'HIRYU' | 'SORYU';
 
 export type UnitType = 'FIGHTER' | 'DIVE_BOMBER' | 'TORPEDO_BOMBER';
 
-export type UnitStatus = 'READY' | 'STAGING' | 'IN_FLIGHT' | 'RETURNING' | 'DESTROYED' | 'CAP_LOW' | 'CAP_NORMAL';
+export type UnitStatus = 'READY' | 'STAGING' | 'IN_FLIGHT' | 'RETURNING' | 'DESTROYED' | 'CAP_LOW' | 'CAP_NORMAL' | 'POOL';
+
+export type GameLocation = 
+  | JapaneseCarrier 
+  | 'MIDWAY' 
+  | 'STAGING' 
+  | 'FLEET_APPROACH' 
+  | 'FLEET_TARGET' 
+  | 'MIDWAY_FLIGHT' 
+  | 'MIDWAY_TARGET' 
+  | 'US_POOL' 
+  | 'TURN_TRACK'
+  | 'CAP';
 
 export interface Unit {
   id: string;
   type: UnitType;
   owner: 'JAPAN' | 'US';
-  carrier?: JapaneseCarrier;
+  carrier?: JapaneseCarrier; // Original carrier for Japan
   status: UnitStatus;
+  location: GameLocation;
   turnsUntilReady?: number;
 }
 
