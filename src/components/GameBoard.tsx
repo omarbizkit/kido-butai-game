@@ -3,7 +3,7 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 
-import { CarrierState, Unit, JapaneseCarrier } from '../types';
+import { CarrierState, Unit, JapaneseCarrier, GameLocation } from '../types';
 import { UnitToken } from './UnitToken';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -31,13 +31,13 @@ export const GameBoard: React.FC = () => {
     resetGame
   } = useGameStore();
 
-  const score = calculateScore(useGameStore.getState());
+  const score = calculateScore({ turn, phase, carriers, units, log, isUsFleetFound, isJapanFleetFound, midwayDamage, isGameOver } as any);
 
   const getUnitsAtLocation = (location: string) => {
     return units.filter((u: Unit) => u.location === location);
   };
 
-  const handleLocationClick = (location: any) => {
+  const handleLocationClick = (location: GameLocation) => {
     if (selectedUnitId) {
       moveUnit(selectedUnitId, location);
     }

@@ -63,7 +63,7 @@ export const useGameStore = create<GameStore>()(
       selectedUnitId: null,
       selectUnit: (id: string | null) => set({ selectedUnitId: id }),
       setPhase: (phase: Phase) => set({ phase }),
-      addLog: (message: string) => set((state) => ({ log: [message, ...state.log].slice(0, 50) })),
+      addLog: (message: string) => set((state: GameState) => ({ log: [message, ...state.log].slice(0, 50) })),
       setNextPhase: () => {
         const state = get();
         const result = getNextPhase(state.phase, state.turnIndex);
@@ -101,7 +101,7 @@ export const useGameStore = create<GameStore>()(
         const state = get();
         const result = resolveRecon(state);
         const { log, ...others } = result;
-        set((prev) => ({
+        set((prev: GameStore) => ({
           ...prev,
           ...others,
           log: [...log, ...prev.log].slice(0, 50)
@@ -150,12 +150,12 @@ export const useGameStore = create<GameStore>()(
       },
       moveUnit: (unitId: string, targetLocation: GameLocation) => {
         const state = get();
-        const unit = state.units.find(u => u.id === unitId);
+        const unit = state.units.find((u: Unit) => u.id === unitId);
         if (!unit) return;
 
         const validation = canMoveUnit(unit, targetLocation, state);
         if (!validation.allowed) {
-          set((s) => ({ log: [`Order rejected: ${validation.reason}`, ...s.log].slice(0, 50) }));
+          set((s: GameStore) => ({ log: [`Order rejected: ${validation.reason}`, ...s.log].slice(0, 50) }));
           return;
         }
 
@@ -165,7 +165,7 @@ export const useGameStore = create<GameStore>()(
         // Handle CAP transitions
         if (oldLocation === 'CAP') {
           const carrier = carriers[unit.carrier!];
-          carrier.capSlots = carrier.capSlots.map(s => s === unitId ? null : s);
+          carrier.capSlots = carrier.capSlots.map((s: string | null) => s === unitId ? null : s);
         }
 
         if (targetLocation === 'CAP') {
@@ -176,8 +176,8 @@ export const useGameStore = create<GameStore>()(
           }
         }
 
-        const newUnits = state.units.map(u => 
-          u.id === unitId ? { ...u, location: targetLocation, status: targetLocation === 'CAP' ? 'CAP_NORMAL' : u.status } : u
+        const newUnits = state.units.map((u: Unit) => 
+          u.id === unitId ? { ...u, location: targetLocation, status: targetLocation === 'CAP' ? 'CAP_NORMAL' as const : u.status } : u
         );
 
         set({ 
@@ -191,7 +191,7 @@ export const useGameStore = create<GameStore>()(
         const state = get();
         if (state.phase !== 'JAPANESE') return;
 
-        const unitsToStrike = state.units.filter(u => 
+        const unitsToStrike = state.units.filter((u: Unit) => 
           u.location === 'STAGING' || u.location === 'MIDWAY_FLIGHT'
         );
 
@@ -201,7 +201,7 @@ export const useGameStore = create<GameStore>()(
         let currentMidwayDamage = state.midwayDamage;
         let newLogs: string[] = ['--- Resolving Japanese Strikes ---'];
         
-        const newUnits = state.units.map(u => {
+        const newUnits = state.units.map((u: Unit) => {
           if (u.location === 'STAGING' || u.location === 'MIDWAY_FLIGHT') {
             const target: Target = u.location === 'STAGING' ? 'US_TF' : 'MIDWAY';
             const result = resolveJapaneseStrike(u, target, state);
@@ -219,7 +219,7 @@ export const useGameStore = create<GameStore>()(
             newLogs.push(`${u.id} (${u.type}) rolls ${result.rolls.join(',')} vs ${target}: ${result.hits} hit(s)`);
             
             if (result.hits > 0) {
-              const damageResult = applyDamage(target, result.hits, { ...state, carriers: currentCarriers, midwayDamage: currentMidwayDamage });
+              const damageResult = applyDamage(target, result.hits, { ...state, carriers: currentCarriers, midwayDamage: currentMidwayDamage } as GameState);
               if (damageResult.carriers) currentCarriers = damageResult.carriers;
               if (damageResult.midwayDamage !== undefined) currentMidwayDamage = damageResult.midwayDamage;
               newLogs.push(...damageResult.log);

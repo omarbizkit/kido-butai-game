@@ -101,8 +101,9 @@ kido-butai/
 
 ### 🏗️ In Progress / Planned
 
+- **Advanced Visual Polish** (Step 8 - CURRENT): Improving UI based on historical board game aesthetics.
+- **Technical Debt Resolution**: Systematically resolving TypeScript lint errors and implicit any types.
 - **Replay System**: Persistence of game logs for post-action assessment.
-- **Visual Polish**: Advanced animations for combat resolution and unit movement.
 - **Historical Scenarios**: Setup presets for different historical starting positions.
 
 ## Rules Fidelity
