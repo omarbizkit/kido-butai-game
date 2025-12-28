@@ -46,6 +46,7 @@ export interface CarrierState {
   isSunk: boolean;
   capacity: number;
   capSlots: (string | null)[]; // unit ids
+  lastHitTime?: number; // timestamp for shake animations
 }
 
 export interface GameState {
@@ -59,4 +60,5 @@ export interface GameState {
   isJapanFleetFound: boolean;
   log: string[];
   isGameOver: boolean;
+  activeRolls?: number[];
 }

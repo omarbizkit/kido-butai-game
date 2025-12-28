@@ -203,6 +203,7 @@ export const applyDamage = (
           ...carrier,
           damage: newDamage,
           isSunk: newDamage >= 4,
+          lastHitTime: Date.now(),
         }
       };
       logs.push(`${target} hit for ${hits}! Current damage: ${newDamage}`);

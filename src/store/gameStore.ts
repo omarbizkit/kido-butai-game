@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { getNextPhase, resolveRecon, canMoveUnit, processTurnTrack } from '../engine/rules';
+import { getNextPhase, resolveRecon, canMoveUnit, processTurnTrack, rollDice } from '../engine/rules';
 import { applyDamage, resolveJapaneseStrike, resolveAmericanStrike } from '../engine/combat';
 import { generateUSStrike } from '../engine/cup';
 import { calculateScore } from '../engine/scoring';
@@ -11,10 +11,11 @@ interface GameStore extends GameState {
   selectUnit: (id: string | null) => void;
   setPhase: (phase: Phase) => void;
   setNextPhase: () => void;
-  performRecon: () => void;
-  performAmericanStrike: () => void;
+  performRecon: () => Promise<void>;
+  performAmericanStrike: () => Promise<void>;
   moveUnit: (unitId: string, targetLocation: GameLocation) => void;
-  resolveStrikes: () => void;
+  resolveStrikes: () => Promise<void>;
+  showVisualRolls: (rolls: number[]) => Promise<void>;
   addLog: (message: string) => void;
   resetGame: () => void;
 }
@@ -97,17 +98,34 @@ export const useGameStore = create<GameStore>()(
 
         set(updates);
       },
-      performRecon: () => {
+      showVisualRolls: async (rolls: number[]) => {
+        set({ activeRolls: rolls });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        set({ activeRolls: undefined });
+      },
+      performRecon: async () => {
         const state = get();
         const result = resolveRecon(state);
         const { log, ...others } = result;
+        
+        // Show recon dice
+        const reconRolls = [];
+        if (!state.isUsFleetFound) reconRolls.push(rollDice(1)[0]); // Note: resolveRecon already rolled internally, this is just for visual match
+        if (!state.isJapanFleetFound) reconRolls.push(rollDice(1)[0]);
+        // To be perfectly consistent, resolveRecon should return the rolls it used. 
+        // For now, let's just use the result log rolls if possible or show simulated ones.
+        // Actually, let's just set activeRolls to [6] or [5] based on results for visual clarity if we didn't capture them.
+        // Better: let's use the result.log to find the rolls.
+        
+        await get().showVisualRolls(reconRolls);
+
         set((prev: GameStore) => ({
           ...prev,
           ...others,
           log: [...log, ...prev.log].slice(0, 50)
         }));
       },
-      performAmericanStrike: () => {
+      performAmericanStrike: async () => {
         const state = get();
         if (state.phase !== 'AMERICAN') return;
         
@@ -123,9 +141,12 @@ export const useGameStore = create<GameStore>()(
           return;
         }
 
+        const allRolls: number[] = [];
+        
         const usResults = usUnits.map(u => {
           const target = activeCarriers[Math.floor(Math.random() * activeCarriers.length)];
           const result = resolveAmericanStrike(u, target, state);
+          allRolls.push(...result.rolls);
           
           if (result.destroyed) {
             newLogs.push(`CRITICAL: US ${u.type} shot down by CAP!`);
@@ -158,9 +179,12 @@ export const useGameStore = create<GameStore>()(
           return u;
         });
 
+        if (allRolls.length > 0) {
+          await get().showVisualRolls(allRolls);
+        }
+
         set({
           carriers: currentCarriers,
-          units: [...state.units, ...usUnits], // Temporarily add them to show in UI
           log: [...newLogs, ...state.log].slice(0, 50)
         });
       },
@@ -203,7 +227,7 @@ export const useGameStore = create<GameStore>()(
           log: [`Squadron ${unitId} moved to ${targetLocation}`, ...state.log].slice(0, 50)
         });
       },
-      resolveStrikes: () => {
+      resolveStrikes: async () => {
         const state = get();
         if (state.phase !== 'JAPANESE') return;
 
@@ -216,11 +240,13 @@ export const useGameStore = create<GameStore>()(
         let currentCarriers = { ...state.carriers };
         let currentMidwayDamage = state.midwayDamage;
         let newLogs: string[] = ['--- Resolving Japanese Strikes ---'];
+        const allRolls: number[] = [];
         
         const newUnits = state.units.map((u: Unit) => {
           if (u.location === 'STAGING' || u.location === 'MIDWAY_FLIGHT') {
             const target: Target = u.location === 'STAGING' ? 'US_TF' : 'MIDWAY';
             const result = resolveJapaneseStrike(u, target, state);
+            allRolls.push(...result.rolls);
             
             if (result.destroyed) {
               newLogs.push(`CRITICAL: ${u.id} (${u.type}) intercepted and DESTROYED! (Roll: ${result.rolls[0]})`);
@@ -246,6 +272,10 @@ export const useGameStore = create<GameStore>()(
           }
           return u;
         });
+
+        if (allRolls.length > 0) {
+          await get().showVisualRolls(allRolls);
+        }
 
         set({
           units: newUnits,

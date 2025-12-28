@@ -8,6 +8,8 @@ import { UnitToken } from './UnitToken';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { calculateScore } from '../engine/scoring';
+import { motion, AnimatePresence } from 'framer-motion';
+import { DiceTray } from './DiceTray';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -70,7 +72,14 @@ export const GameBoard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 z-10">
         {(Object.values(carriers) as CarrierState[]).map((carrier: CarrierState) => (
-          <div key={carrier.name} className="relative p-4 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col gap-4 shadow-2xl backdrop-blur-md overflow-hidden group/card">
+          <motion.div 
+            key={carrier.name} 
+            animate={carrier.lastHitTime ? {
+              x: [0, -10, 10, -10, 10, 0],
+              transition: { duration: 0.4 }
+            } : {}}
+            className="relative p-4 bg-slate-950/40 rounded-xl border border-white/5 flex flex-col gap-4 shadow-2xl backdrop-blur-md overflow-hidden group/card"
+          >
             {/* Carrier identification stripe */}
             <div className="absolute top-0 right-0 w-16 h-16 opacity-10 pointer-events-none translate-x-8 -translate-y-8 rotate-45 bg-white" />
             
@@ -154,7 +163,7 @@ export const GameBoard: React.FC = () => {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
@@ -170,11 +179,19 @@ export const GameBoard: React.FC = () => {
                 <div className="flex gap-4">
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] text-slate-400 font-mono uppercase">US:</span>
-                    <span className={cn("w-2 h-2 rounded-full", isUsFleetFound ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-slate-700")} />
+                    <motion.span 
+                      animate={!isUsFleetFound ? { opacity: [0.3, 1, 0.3] } : { opacity: 1 }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className={cn("w-2 h-2 rounded-full", isUsFleetFound ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-slate-700")} 
+                    />
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] text-slate-400 font-mono uppercase">JPN:</span>
-                    <span className={cn("w-2 h-2 rounded-full", isJapanFleetFound ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-slate-700")} />
+                    <motion.span 
+                      animate={!isJapanFleetFound ? { opacity: [0.3, 1, 0.3] } : { opacity: 1 }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className={cn("w-2 h-2 rounded-full", isJapanFleetFound ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-slate-700")} 
+                    />
                   </div>
                 </div>
               </div>
@@ -385,6 +402,7 @@ export const GameBoard: React.FC = () => {
           </div>
         </div>
       )}
+      <DiceTray />
     </div>
   );
 };

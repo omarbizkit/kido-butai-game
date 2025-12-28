@@ -29,7 +29,7 @@ You are an expert full-stack developer and game designer specializing in digital
 
 ## Current Objective
 
-- **Step 9 (Advanced Combat)**: Implement "Critical Hit" special rules, advanced damage effects (Midway airfield cratering), and experimental dice roll visualizations.
+- **Step 10 (High-Fidelity Visuals)**: Implement experimental dice roll visualizations, strike launch sequences (Framer Motion), and dynamic "Battle Shakes" for carrier cards.
 
 ---
 
