@@ -108,11 +108,17 @@ npm test
 
 The game uses d6 dice with specific thresholds for each combat type:
 
-- **Fighter vs Fighter**: Both sides roll simultaneously
-- **Fighter vs Bomber**: Fighters can abort or kill bombers
-- **AA Fire**: Can abort bombers before they attack
-- **Normal Attack**: Each bomber rolls to hit assigned target
-- **Special Attack**: All dice pips count as hits (when conditions met)
+- **Fighter vs Fighter**: 5+ hit (destroy).
+- **Fighter vs Bomber**: 5+ kill, 3-4 abort.
+- **AA Fire**: 6 abort (no damage).
+- **Normal Attack**: 1 hit on success (Dive Bomber 6, Torpedo Bomber 5+).
+- **Special Attack (Unopposed)**: If a target has no effective CAP, any surviving bomber inflicts hits equal to the **total pips rolled** on the die (e.g., a roll of 4 = 4 hits).
+
+#### Advanced Mechanics
+
+- **Low CAP**: Fighters that intercept Torpedo Bombers become exhausted (CAP_LOW). They cannot intercept Dive Bombers until they recover in the next Cleanup phase.
+- **Midway Cratering**: Damage to Midway reduces landing capacity. If damage exceeds 12, the base is effectively neutralized.
+- **Carrier Sinking**: Standard carriers sink after 4 hits. Damaged carriers have reduced aircraft capacity.
 
 ### Victory Conditions
 
