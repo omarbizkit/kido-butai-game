@@ -58,4 +58,5 @@ export interface GameState {
   isUsFleetFound: boolean;
   isJapanFleetFound: boolean;
   log: string[];
+  isGameOver: boolean;
 }

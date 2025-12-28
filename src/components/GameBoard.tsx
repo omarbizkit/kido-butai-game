@@ -3,10 +3,11 @@
 import React from 'react';
 import { useGameStore } from '../store/gameStore';
 
-import { CarrierState, Unit } from '../types';
+import { CarrierState, Unit, JapaneseCarrier } from '../types';
 import { UnitToken } from './UnitToken';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { calculateScore } from '../engine/scoring';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -25,8 +26,12 @@ export const GameBoard: React.FC = () => {
     selectedUnitId,
     moveUnit,
     resolveStrikes,
-    performAmericanStrike
+    performAmericanStrike,
+    isGameOver,
+    resetGame
   } = useGameStore();
+
+  const score = calculateScore(useGameStore.getState());
 
   const getUnitsAtLocation = (location: string) => {
     return units.filter((u: Unit) => u.location === location);
@@ -249,6 +254,56 @@ export const GameBoard: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {isGameOver && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
+          <div className="bg-slate-900 border-2 border-game-gold p-8 rounded-2xl max-w-lg w-full shadow-[0_0_50px_rgba(255,215,0,0.2)] animate-in zoom-in duration-300">
+            <h2 className="text-4xl font-black text-game-gold text-center uppercase italic tracking-tighter mb-2">
+              Mission Report
+            </h2>
+            <p className="text-center text-slate-400 font-mono text-sm uppercase mb-8 border-b border-slate-800 pb-4">
+              Historical Assessment: {score.rating}
+            </p>
+
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-500 uppercase font-bold">Midway Bombardment</span>
+                <span className="text-white font-mono">{score.japanMidwayPoints} pts</span>
+              </div>
+              <div className="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+                <span className="text-slate-500 uppercase font-bold">US Squadrons Shot Down</span>
+                <span className="text-emerald-400 font-mono">+{Math.round(score.japanSquadronKillPoints)} pts</span>
+              </div>
+              
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-500 uppercase font-bold">Carrier Damage Taken</span>
+                <span className="text-red-400 font-mono">-{score.usCarrierHitPoints + score.usCarrierSunkPoints} pts</span>
+              </div>
+              <div className="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+                <span className="text-slate-500 uppercase font-bold">Japan Squadrons Lost</span>
+                <span className="text-red-400 font-mono">-{Math.round(score.usSquadronKillPoints)} pts</span>
+              </div>
+
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-xl font-black text-white uppercase italic">Final Score</span>
+                <span className={cn(
+                  "text-3xl font-black font-mono",
+                  score.finalScore >= 0 ? "text-game-gold" : "text-red-500"
+                )}>
+                  {score.finalScore > 0 ? `+${score.finalScore}` : score.finalScore}
+                </span>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => resetGame()}
+              className="w-full py-4 bg-game-gold text-black font-black rounded-xl hover:bg-yellow-500 transition-all uppercase tracking-widest shadow-lg"
+            >
+              Return to Menu
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { getNextPhase, resolveRecon, canMoveUnit, processTurnTrack } from '../engine/rules';
 import { applyDamage, resolveJapaneseStrike, resolveAmericanStrike } from '../engine/combat';
 import { generateUSStrike } from '../engine/cup';
+import { calculateScore } from '../engine/scoring';
 import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target } from '../types';
 
 interface GameStore extends GameState {
@@ -52,6 +53,7 @@ const INITIAL_STATE: GameState = {
   isUsFleetFound: false,
   isJapanFleetFound: false,
   log: ['Game started at 04:30'],
+  isGameOver: false,
 };
 
 export const useGameStore = create<GameStore>()(
@@ -83,9 +85,14 @@ export const useGameStore = create<GameStore>()(
 
         if (result.nextPhase === 'CLEANUP') {
           const recovery = processTurnTrack(state.units);
-          // Also remove all US units from the board
           updates.units = recovery.units.filter(u => u.owner === 'JAPAN');
           updates.log = [...recovery.log, ...updates.log!];
+        }
+
+        const scoreCheck = calculateScore({ ...state, ...updates } as GameState);
+        if (scoreCheck.isGameOver) {
+          updates.isGameOver = true;
+          updates.log = [`--- GAME OVER: ${scoreCheck.rating} ---`, ...updates.log!];
         }
 
         set(updates);

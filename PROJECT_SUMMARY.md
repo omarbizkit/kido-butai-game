@@ -84,6 +84,13 @@ kido-butai/
 - **Dynamic Combat Logic**: Context-aware defense resolution (US Interception vs Japan CAP, AA vs Bombers).
 - **Transient US Units**: US aircraft appear only during strike resolution and are cleaned up at turn-end.
 
+### ✅ Scoring & Victory Conditions
+
+- **Historical Assessment Engine**: Mathematical conversion of game outcomes into historical ratings (Major Victory to Major Defeat).
+- **Point Gauntlet**: Comprehensive scoring including Midway damage, carrier hits, and aerial attrition.
+- **Game Over Transitions**: Interactive mission reports with detailed point breakdowns and outcome analysis.
+- **Auto-Termination**: Game correctly identifies end-states (all carriers sunk or 19:30 reached).
+
 ### ✅ User Interface
 
 - **Carrier Command Center**: Visual status for Damage, CAP slots, and Ready Decks.
@@ -94,9 +101,9 @@ kido-butai/
 
 ### 🏗️ In Progress / Planned
 
-- **Scoring**: Automated victory point calculation and rank assessment. (Step 7 - UP NEXT)
-- **Game Over Transitions**: Comprehensive victory/defeat screens based on historical outcomes.
 - **Replay System**: Persistence of game logs for post-action assessment.
+- **Visual Polish**: Advanced animations for combat resolution and unit movement.
+- **Historical Scenarios**: Setup presets for different historical starting positions.
 
 ## Rules Fidelity
 
