@@ -58,7 +58,7 @@ const INITIAL_STATE: GameState = {
 
 export const useGameStore = create<GameStore>()(
   persist(
-    (set, get) => ({
+    (set: (state: Partial<GameStore> | ((state: GameStore) => Partial<GameStore>)) => void, get: () => GameStore) => ({
       ...INITIAL_STATE,
       selectedUnitId: null,
       selectUnit: (id: string | null) => set({ selectedUnitId: id }),
@@ -128,17 +128,33 @@ export const useGameStore = create<GameStore>()(
           const result = resolveAmericanStrike(u, target, state);
           
           if (result.destroyed) {
-            newLogs.push(`US ${u.type} shot down by CAP!`);
+            newLogs.push(`CRITICAL: US ${u.type} shot down by CAP!`);
           } else if (result.aborted) {
             newLogs.push(`US ${u.type} aborted attack due to AA/CAP.`);
           } else {
-            newLogs.push(`US ${u.type} rolls vs ${target}: ${result.hits} hit(s)`);
+            const attackType = result.hits > 1 ? 'SPECIAL' : 'NORMAL';
+            newLogs.push(`${attackType} ATTACK: US ${u.type} rolls vs ${target}: ${result.hits} hit(s)`);
             if (result.hits > 0) {
               const damageResult = applyDamage(target, result.hits, { ...state, carriers: currentCarriers });
               if (damageResult.carriers) currentCarriers = damageResult.carriers;
               newLogs.push(...damageResult.log);
             }
           }
+
+          // CAP Exhaustion Logic: 
+          // If Torpedo Bombers were intercepted, flip one CAP unit on that carrier to LOW
+          if (u.type === 'TORPEDO_BOMBER') {
+            const carrierUnits = get().units.filter(unit => unit.location === 'CAP' && unit.carrier === target && unit.status === 'CAP_NORMAL');
+            if (carrierUnits.length > 0) {
+              const unitToExhaust = carrierUnits[0];
+              const updatedUnits = get().units.map(unit => 
+                unit.id === unitToExhaust.id ? { ...unit, status: 'CAP_LOW' as const } : unit
+              );
+              set({ units: updatedUnits });
+              newLogs.push(`NOTICE: ${target} CAP unit ${unitToExhaust.id} exhausted (LOW CAP) after intercepting Torpedo Bombers.`);
+            }
+          }
+
           return u;
         });
 

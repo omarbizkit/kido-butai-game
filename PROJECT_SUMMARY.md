@@ -99,12 +99,21 @@ kido-butai/
 - **Dynamic Combat Log**: Color-coded event markers (Gold summaries, Red critical/sunk), timestamping, and custom scrollbar logic.
 - **Mission Report Visuals**: Redesigned game-over modal with premium typography, scoring breakdown boxes, and zoom-in animations.
 
+### ✅ Combat & Strike Engine (Advanced Logic - Step 9)
+
+- **Multi-Stage Resolution**: Combat gauntlet including US CAP Interception, Defensive AA Fire, and Final Attack runs.
+- **Special Attacks (Unopposed)**: Systematic implementation of the "Unopposed Bomber" rule. If a target has no effective CAP, damage is calculated as the **sum of all pips** rolled.
+- **CAP Exhaustion (Low CAP)**: Fighters now track operational fatigue. Intercepting torpedo bombers flips units to "Low CAP", preventing them from intercepting dive bombers in subsequent attacks.
+- **Historical Thresholds**: Faithful implementation of dice-base hit numbers (e.g., Torpedoes on 5+, Dive Bombers on 6).
+- **Damage System**: Tracking for Midway Airbase damage (12pt threshold) and individual Carrier "Sunk" status.
+- **Unit States**: Automated handling of unit Destruction, Aborts, and Mission Success with status piping.
+
 ### 🏗️ In Progress / Planned
 
-- **Technical Debt Phase 2**: Systematically resolving module resolution lints and refining `tsconfig` for editor compatibility.
 - **Advanced Animations**: Strike launch sequences and interactive dice roll visualizations.
-- **Historical Scenarios**: Setup presets for different historical starting positions.
+- **Historical Scenarios**: Setup presets for different historical starting positions (e.g., "The Fateful Five Minutes").
 - **Replay System**: Persistence of game logs for post-action assessment.
+- **Technical Debt Phase 3**: Resolving environment-specific module resolution warnings.
 
 ## Rules Fidelity
 

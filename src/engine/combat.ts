@@ -48,17 +48,22 @@ export const resolveJapaneseStrike = (
     destroyed: false,
   };
 
-  // 1. US CAP Interception (only if target is TF)
+  // 1. US CAP Interception (only if target is US_TF)
+  // Historical note: US CAP in this game doesn't have "Low CAP" state usually, 
+  // but they can be bypassed or defeated.
   if (target === 'US_TF') {
-    const intercept = resolveInterception(unit, true);
-    result.rolls.push(intercept.roll);
-    if (intercept.destroyed) {
-      result.destroyed = true;
-      return result;
-    }
-    if (intercept.aborted) {
-      result.aborted = true;
-      return result;
+    if (state.isUsFleetFound) { 
+      // Simplified: US always has some CAP if found, unless we implement US carrier damage
+      const intercept = resolveInterception(unit, true);
+      result.rolls.push(intercept.roll);
+      if (intercept.destroyed) {
+        result.destroyed = true;
+        return result;
+      }
+      if (intercept.aborted) {
+        result.aborted = true;
+        return result;
+      }
     }
   }
 
@@ -74,18 +79,19 @@ export const resolveJapaneseStrike = (
   const [attackRoll] = rollDice(1);
   result.rolls.push(attackRoll);
 
-  if (unit.type === 'FIGHTER') {
-    // Fighters vs US TF (if they get through) or vs Midway
-    if (attackRoll >= 5) result.hits = 1;
-  } else if (unit.type === 'DIVE_BOMBER') {
-    if (target === 'MIDWAY') {
+  // UNOPPOSED CHECK: If Midway target (no CAP) or US TF without CAP (not implemented yet)
+  const isUnopposed = target === 'MIDWAY'; // Midway is always unopposed by CAP in this game
+
+  if (isUnopposed) {
+    // Special Rule: Hits = Pips rolled
+    result.hits = attackRoll;
+  } else {
+    // Normal Attack: 1 hit on success
+    if (unit.type === 'FIGHTER') {
+      if (attackRoll >= 5) result.hits = 1;
+    } else if (unit.type === 'DIVE_BOMBER') {
       if (attackRoll >= 6) result.hits = 1;
-    } else {
-      // vs TF: 6+ for hit (simplified)
-      if (attackRoll >= 6) result.hits = 1;
-    }
-  } else if (unit.type === 'TORPEDO_BOMBER') {
-    if (target === 'US_TF') {
+    } else if (unit.type === 'TORPEDO_BOMBER') {
       if (attackRoll >= 5) result.hits = 1;
     }
   }
@@ -108,27 +114,44 @@ export const resolveAmericanStrike = (
   };
 
   // 1. Japan CAP Interception
-  // Check if any Fighters are on CAP for this carrier
-  const capUnitId = state.carriers[targetCarrier].capSlots.find(s => s !== null);
-  if (capUnitId) {
+  const carrier = state.carriers[targetCarrier];
+  const capUnits = state.units.filter(u => 
+    u.location === 'CAP' && 
+    u.carrier === targetCarrier && 
+    u.status !== 'DESTROYED'
+  );
+  
+  const hasNormalCap = capUnits.some(u => u.status === 'CAP_NORMAL');
+  const hasLowCap = capUnits.some(u => u.status === 'CAP_LOW');
+  
+  let capEngaged = false;
+  if (hasNormalCap) {
+    capEngaged = true;
+  } else if (hasLowCap && unit.type !== 'DIVE_BOMBER') {
+    // Low CAP can intercept Torpedo Bombers and Fighters, but NOT Dive Bombers
+    capEngaged = true;
+  }
+
+  if (capEngaged) {
     const [roll] = rollDice(1);
     result.rolls.push(roll);
-    // Japan CAP vs US Bomber: 5+ destroy, 3-4 abort
-    if (unit.type !== 'FIGHTER') {
-      if (roll >= 5) result.destroyed = true;
-      else if (roll >= 3) result.aborted = true;
-    } else {
+    
+    if (unit.type === 'FIGHTER') {
       // Fighter vs Fighter: 5+ destroy
       if (roll >= 5) result.destroyed = true;
+    } else {
+      // CAP vs US Bomber: 5+ destroy, 3-4 abort
+      if (roll >= 5) result.destroyed = true;
+      else if (roll >= 3) result.aborted = true;
     }
     
     if (result.destroyed || result.aborted) return result;
   }
 
   // 2. Japanese AA
-  // Simplified: 6 aborts
   const [aaRoll] = rollDice(1);
   result.rolls.push(aaRoll);
+  // AA vs US Bomber: 6 aborts
   if (unit.type !== 'FIGHTER' && aaRoll >= 6) {
     result.aborted = true;
     return result;
@@ -138,10 +161,18 @@ export const resolveAmericanStrike = (
   const [attackRoll] = rollDice(1);
   result.rolls.push(attackRoll);
 
-  if (unit.type === 'DIVE_BOMBER') {
-    if (attackRoll >= 6) result.hits = 1;
-  } else if (unit.type === 'TORPEDO_BOMBER') {
-    if (attackRoll >= 5) result.hits = 1;
+  // UNOPPOSED CHECK
+  // Unopposed if no CAP was engaged
+  if (!capEngaged) {
+    // Special Rule: Pips = Hits
+    result.hits = attackRoll;
+  } else {
+    // Normal Attack
+    if (unit.type === 'DIVE_BOMBER') {
+      if (attackRoll >= 6) result.hits = 1;
+    } else if (unit.type === 'TORPEDO_BOMBER') {
+      if (attackRoll >= 5) result.hits = 1;
+    }
   }
 
   return result;

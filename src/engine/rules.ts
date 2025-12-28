@@ -5,6 +5,7 @@ export const PHASES: Phase[] = ['JAPANESE', 'RECON', 'AMERICAN', 'CLEANUP'];
 export const processTurnTrack = (units: Unit[]): { units: Unit[]; log: string[] } => {
   const log: string[] = [];
   const nextUnits = units.map(u => {
+    // 1. Recover returning units
     if (u.location === 'TURN_TRACK' && u.turnsUntilReady !== undefined) {
       const nextTurns = u.turnsUntilReady - 1;
       if (nextTurns <= 0) {
@@ -18,6 +19,12 @@ export const processTurnTrack = (units: Unit[]): { units: Unit[]; log: string[] 
       }
       return { ...u, turnsUntilReady: nextTurns };
     }
+    
+    // 2. Recover exhausted CAP (LOW -> NORMAL)
+    if (u.location === 'CAP' && u.status === 'CAP_LOW') {
+      return { ...u, status: 'CAP_NORMAL' as const };
+    }
+
     return u;
   });
 
