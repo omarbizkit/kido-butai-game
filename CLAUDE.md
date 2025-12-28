@@ -29,7 +29,7 @@ You are an expert full-stack developer and game designer specializing in digital
 
 ## Current Objective
 
-- **Step 10 (High-Fidelity Visuals)**: Implement experimental dice roll visualizations, strike launch sequences (Framer Motion), and dynamic "Battle Shakes" for carrier cards.
+- **Step 11 (Historical Scenarios)**: Implement setup presets for different historical starting positions (e.g., "The Fateful Five Minutes") and carrier profile modals.
 
 ---
 

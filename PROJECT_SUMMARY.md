@@ -108,12 +108,12 @@ kido-butai/
 - **Damage System**: Tracking for Midway Airbase damage (12pt threshold) and individual Carrier "Sunk" status.
 - **Unit States**: Automated handling of unit Destruction, Aborts, and Mission Success with status piping.
 
-### 🏗️ In Progress / Planned (Step 10 - CURRENT)
+- **High-Fidelity Visuals (Step 10)**: Dynamic Dice Tray with batch rolling, Battle Shakes for damaged carriers, smooth unit transitions (layoutId), and searching pulses for fleet discovery.
 
-- **Advanced Animations**: Strike launch sequences using Framer Motion (Ready -> Staging -> Target).
-- **Dynamic Dice Tray**: Visual representation of combat rolls with historical die faces.
-- **Battle Shakes**: Haptic-style visual feedback when carriers take damage.
+### 🏗️ In Progress / Planned (Step 11 - CURRENT)
+
 - **Historical Scenarios**: Setup presets for different historical starting positions (e.g., "The Fateful Five Minutes").
+- **Carrier Profile Modals**: Detailed information and historical flavor text for each carrier when clicked.
 - **Replay System**: Persistence of game logs for post-action assessment.
 - **Technical Debt Phase 4**: Environment-specific lint cleanup.
 
