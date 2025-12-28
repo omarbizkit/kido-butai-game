@@ -61,4 +61,13 @@ export interface GameState {
   log: string[];
   isGameOver: boolean;
   activeRolls?: number[];
+  currentScenario?: string;
 }
+
+export type Scenario = {
+  id: string;
+  name: string;
+  description: string;
+  startTime: string;
+  initialState: Partial<GameState>;
+};
