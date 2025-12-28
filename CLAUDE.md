@@ -29,7 +29,7 @@ You are an expert full-stack developer and game designer specializing in digital
 
 ## Current Objective
 
-- **Step 8 (Polish)**: Systematically resolve TypeScript lint errors, improve visual aesthetics (indicators, animations), and prepare for advanced features like historical scenarios and replays.
+- **Step 9 (Advanced Combat)**: Implement "Critical Hit" special rules, advanced damage effects (Midway airfield cratering), and experimental dice roll visualizations.
 
 ---
 

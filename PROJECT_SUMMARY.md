@@ -91,20 +91,20 @@ kido-butai/
 - **Game Over Transitions**: Interactive mission reports with detailed point breakdowns and outcome analysis.
 - **Auto-Termination**: Game correctly identifies end-states (all carriers sunk or 19:30 reached).
 
-### ✅ User Interface
+### ✅ User Interface (Premium Tactical Polish - Step 8)
 
-- **Carrier Command Center**: Visual status for Damage, CAP slots, and Ready Decks.
-- **Unit Tokens**: Sleek, iconified representations of squadrons with status indicators.
-- **Strategy Council**: Contextual action panel for phase transitions and recon.
-- **Real-time Log**: History of all game events and dice rolls.
-- **Responsive Layout**: Premium dark-mode aesthetic with reactive zone highlighting.
+- **Tactile Unit Tokens**: Iconified representations with carrier-specific color themes (Akagi Red, Kaga Blue, Hiryu Emerald, Soryu Amber), tactile bevels, and inner shadows.
+- **Flight Deck Dashboard**: Carrier cards styled as command consoles with animated integrity/damage bars and high-contrast status readouts.
+- **Strategy Council**: Modernized GLASSMORHISM panel, discovery status indicators, and high-impact action buttons with gold/navy theme.
+- **Dynamic Combat Log**: Color-coded event markers (Gold summaries, Red critical/sunk), timestamping, and custom scrollbar logic.
+- **Mission Report Visuals**: Redesigned game-over modal with premium typography, scoring breakdown boxes, and zoom-in animations.
 
 ### 🏗️ In Progress / Planned
 
-- **Advanced Visual Polish** (Step 8 - CURRENT): Improving UI based on historical board game aesthetics.
-- **Technical Debt Resolution**: Systematically resolving TypeScript lint errors and implicit any types.
-- **Replay System**: Persistence of game logs for post-action assessment.
+- **Technical Debt Phase 2**: Systematically resolving module resolution lints and refining `tsconfig` for editor compatibility.
+- **Advanced Animations**: Strike launch sequences and interactive dice roll visualizations.
 - **Historical Scenarios**: Setup presets for different historical starting positions.
+- **Replay System**: Persistence of game logs for post-action assessment.
 
 ## Rules Fidelity
 
