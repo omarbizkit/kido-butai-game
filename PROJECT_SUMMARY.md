@@ -113,12 +113,24 @@ kido-butai/
 - **High-Fidelity Visuals (Step 10)**: Dynamic Dice Tray with batch rolling, Battle Shakes for damaged carriers, smooth unit transitions (layoutId), and searching pulses for fleet discovery.
 - **Historical Content (Step 11)**: Historical Engagement Scenarios (Presets), Scenario Selection UI, and detailed Carrier Dossier modals with historical flavor text.
 
-### Step 12: Final Polish & Systems Upgrade ✅
-
-- **Rich Log History:** Upgraded the combat log to a full `LogEntry` system with timestamps and type-based styling.
-- **Dossier System:** Enhanced carrier profiles with premium tactical dossier imagery and expanded historical data.
-- **UI/UX Refinement:** Polished all modals with glassmorphism, background artistic overlays, and improved typography.
 - **Stability:** Cleaned up type inconsistencies in the store and engine.
+
+### 🏗️ Step 13: Tactical Audio & Immersive Soundscapes (CURRENT)
+
+- **Ambient Tension:** Multi-layered background soundscapes (Ocean, Wind, Distant Gunfire).
+- **Tactical SFX:** High-impact audio for dice trays, squadron launches, and carrier hits.
+- **Historical Audio:** Radio chatter and Morse signaling for recon successes.
+- **Audio Controls:** Volume modulation and toggle settings.
+
+### 🏗️ Step 14: Advanced AI Intelligence (Nimitz Overhaul)
+
+- **Reactive US Strikes:** US AI targets weak points and concentrates fire on high-value targets.
+- **Dummy Token Bluffing:** Enhanced randomization logic for strike package compositions.
+
+### 🏗️ Step 15: Replay & Tactical Analysis
+
+- **AAR Export:** Downloadable JSON "After Action Reports".
+- **Turn-by-Turn Replay:** Interactive visual review of the log history.
 
 ## Rules Fidelity
 

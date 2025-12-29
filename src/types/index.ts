@@ -60,6 +60,8 @@ export interface GameState {
   isJapanFleetFound: boolean;
   log: LogEntry[];
   isGameOver: boolean;
+  audioEnabled: boolean;
+  volume: number;
   activeRolls?: number[];
   currentScenario?: string;
 }

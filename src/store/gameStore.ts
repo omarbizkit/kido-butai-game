@@ -19,9 +19,11 @@ interface GameStore extends GameState {
   resolveStrikes: () => Promise<void>;
   showVisualRolls: (rolls: number[]) => Promise<void>;
   loadScenario: (scenarioId: string) => void;
-  addLog: (message: string) => void;
-  resetGame: () => void;
-}
+   addLog: (message: string) => void;
+   toggleAudio: () => void;
+   setVolume: (volume: number) => void;
+   resetGame: () => void;
+ }
 
 const TURNS = [
   '04:30', '05:30', '06:30', '07:30', '08:30', '09:30', 
@@ -58,7 +60,9 @@ const INITIAL_STATE: GameState = {
   isJapanFleetFound: false,
   log: [createLogEntry('Game started at 04:30', 'SYSTEM')],
   isGameOver: false,
-};
+  audioEnabled: true,
+  volume: 0.5,
+ };
 
 export const useGameStore = create<GameStore>()(
   persist(
@@ -70,6 +74,8 @@ export const useGameStore = create<GameStore>()(
       addLog: (message: string, type: LogEntry['type'] = 'SYSTEM') => set((state: GameState) => ({ 
         log: [createLogEntry(message, type), ...state.log].slice(0, 200) 
       })),
+      toggleAudio: () => set((state: GameStore) => ({ audioEnabled: !state.audioEnabled })),
+      setVolume: (volume: number) => set({ volume }),
       setNextPhase: () => {
         const state = get();
         const result = getNextPhase(state.phase, state.turnIndex);

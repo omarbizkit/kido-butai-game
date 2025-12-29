@@ -1,4 +1,6 @@
 import { GameBoard } from '@/components/GameBoard';
+import { AudioInitializer } from '@/components/AudioInitializer';
+import { AudioControls } from '@/components/AudioControls';
 
 export default function Home() {
   return (
@@ -15,6 +17,8 @@ export default function Home() {
         </header>
         
         <GameBoard />
+        <AudioInitializer />
+        <AudioControls />
       </div>
     </main>
   );
