@@ -1,5 +1,6 @@
 import { GameState, Unit, JapaneseCarrier, Target, UnitStatus, GameLocation, CombatResult, AttackType } from '../types';
 import { rollDice } from './rules';
+import { audioManager } from '../utils/audio';
 
 export const resolveAA = (unit: Unit): { aborted: boolean; roll: number } => {
   const [roll] = rollDice(1);
@@ -189,25 +190,39 @@ export const applyDamage = (
   if (target === 'MIDWAY') {
     updates.midwayDamage = (state.midwayDamage || 0) + hits;
     logs.push(`Midway takes ${hits} damage! Total: ${updates.midwayDamage}`);
+    audioManager.playSFX('EXPLOSION');
   } else if (target === 'US_TF') {
     logs.push(`US Task Force hammered for ${hits} hits!`);
+    audioManager.playSFX('EXPLOSION');
     // US TF damage logic (sinking carriers etc) would go here
   } else {
     // Target is a specific Japanese Carrier (e.g. from US attack)
     const carrier = state.carriers[target as JapaneseCarrier];
     if (carrier) {
       const newDamage = carrier.damage + hits;
+      const wasSunk = carrier.isSunk;
+      const nowSunk = newDamage >= 4;
+
       updates.carriers = {
         ...state.carriers,
         [target]: {
           ...carrier,
           damage: newDamage,
-          isSunk: newDamage >= 4,
+          isSunk: nowSunk,
           lastHitTime: Date.now(),
         }
       };
       logs.push(`${target} hit for ${hits}! Current damage: ${newDamage}`);
-      if (newDamage >= 4) logs.push(`CRITICAL: ${target} is sinking!`);
+
+      // Play appropriate sound effect
+      if (nowSunk && !wasSunk) {
+        // Carrier just sank
+        logs.push(`CRITICAL: ${target} is sinking!`);
+        audioManager.playSFX('SUNK');
+      } else {
+        // Carrier hit but still afloat
+        audioManager.playSFX('EXPLOSION');
+      }
     }
   }
 

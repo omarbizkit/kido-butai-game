@@ -7,6 +7,7 @@ import { calculateScore } from '../engine/scoring';
 import { applyScenario } from '../engine/scenarios';
 import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target, LogEntry } from '../types';
 import { createLogEntry, logsToEntries } from '../utils/log';
+import { audioManager } from '../utils/audio';
 
 interface GameStore extends GameState {
   selectedUnitId: string | null;
@@ -74,12 +75,21 @@ export const useGameStore = create<GameStore>()(
       addLog: (message: string, type: LogEntry['type'] = 'SYSTEM') => set((state: GameState) => ({ 
         log: [createLogEntry(message, type), ...state.log].slice(0, 200) 
       })),
-      toggleAudio: () => set((state: GameStore) => ({ audioEnabled: !state.audioEnabled })),
-      setVolume: (volume: number) => set({ volume }),
+      toggleAudio: () => set((state: GameStore) => {
+        const newEnabled = !state.audioEnabled;
+        audioManager.setEnabled(newEnabled);
+        return { audioEnabled: newEnabled };
+      }),
+      setVolume: (volume: number) => {
+        audioManager.setVolume(volume);
+        set({ volume });
+      },
       setNextPhase: () => {
         const state = get();
         const result = getNextPhase(state.phase, state.turnIndex);
-        
+
+        audioManager.playSFX('PHASE_CHANGE');
+
         const updates: Partial<GameState> & { selectedUnitId: null } = {
           phase: result.nextPhase,
           log: [...logsToEntries(result.logEntries), ...state.log].slice(0, 200),
@@ -111,6 +121,7 @@ export const useGameStore = create<GameStore>()(
       },
       showVisualRolls: async (rolls: number[]) => {
         set({ activeRolls: rolls });
+        audioManager.playSFX('DICE_ROLL');
         await new Promise(resolve => setTimeout(resolve, 2000));
         set({ activeRolls: undefined });
       },
@@ -118,17 +129,22 @@ export const useGameStore = create<GameStore>()(
         const state = get();
         const result = resolveRecon(state);
         const { log, ...others } = result;
-        
+
         // Show recon dice
         const reconRolls = [];
         if (!state.isUsFleetFound) reconRolls.push(rollDice(1)[0]); // Note: resolveRecon already rolled internally, this is just for visual match
         if (!state.isJapanFleetFound) reconRolls.push(rollDice(1)[0]);
-        // To be perfectly consistent, resolveRecon should return the rolls it used. 
+        // To be perfectly consistent, resolveRecon should return the rolls it used.
         // For now, let's just use the result log rolls if possible or show simulated ones.
         // Actually, let's just set activeRolls to [6] or [5] based on results for visual clarity if we didn't capture them.
         // Better: let's use the result.log to find the rolls.
-        
+
         await get().showVisualRolls(reconRolls);
+
+        // Play recon success sound if either fleet was found
+        if (others.isUsFleetFound || others.isJapanFleetFound) {
+          audioManager.playSFX('RECON_SUCCESS');
+        }
 
         set((prev: GameStore) => ({
           ...prev,
@@ -229,13 +245,18 @@ export const useGameStore = create<GameStore>()(
           }
         }
 
-        const newUnits = state.units.map((u: Unit) => 
+        const newUnits = state.units.map((u: Unit) =>
           u.id === unitId ? { ...u, location: targetLocation, status: targetLocation === 'CAP' ? 'CAP_NORMAL' as const : u.status } : u
         );
 
-        set({ 
-          units: newUnits, 
-          carriers, 
+        // Play launch sound when aircraft move to staging areas
+        if (targetLocation === 'STAGING' || targetLocation === 'MIDWAY_FLIGHT') {
+          audioManager.playSFX('LAUNCH');
+        }
+
+        set({
+          units: newUnits,
+          carriers,
           selectedUnitId: null,
           log: [createLogEntry(`Squadron ${unitId} moved to ${targetLocation}`, 'MOVEMENT'), ...state.log].slice(0, 200)
         });

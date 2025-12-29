@@ -92,7 +92,7 @@ export const rollDice = (count: number = 1): number[] => {
   return Array.from({ length: count }, () => Math.floor(Math.random() * 6) + 1);
 };
 
-export const resolveRecon = (state: GameState): Partial<GameState> & { log: string[] } => {
+export const resolveRecon = (state: GameState): { log: string[] } & Partial<Omit<GameState, 'log'>> => {
   const japanRoll = rollDice(1)[0];
   const usRoll = rollDice(1)[0];
   const logs: string[] = [];

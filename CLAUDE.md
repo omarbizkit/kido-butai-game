@@ -26,8 +26,20 @@ You are an expert full-stack developer and game designer specializing in digital
 - `src/store/`: Zustand state and actions.
 - `src/components/`: Reusable UI components.
 - `src/types/`: Centralized TypeScript interfaces.
+- `src/utils/`: Utility functions (logging, audio).
+- `scripts/`: Build and maintenance scripts.
+- `public/sounds/`: Audio assets.
 
-## Current Phase: V1 Complete (Final Polish Delivered)
+## Current Phase: V1 Complete + Audio System (Step 13 Complete)
+
+**Status**: Production-ready. All critical bugs fixed, audio system fully implemented and wired.
+
+### Latest Changes (Dec 2025)
+- ✅ Fixed type error in `resolveRecon()` blocking builds
+- ✅ Implemented complete Web Audio API integration
+- ✅ Wired 6 tactical sound effects to game events
+- ✅ Generated synthetic audio files (WAV format)
+- ✅ Audio controls with volume/mute persistence
 
 ---
 

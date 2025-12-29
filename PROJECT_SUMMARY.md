@@ -115,12 +115,21 @@ kido-butai/
 
 - **Stability:** Cleaned up type inconsistencies in the store and engine.
 
-### 🏗️ Step 13: Tactical Audio & Immersive Soundscapes (CURRENT)
+### ✅ Step 13: Tactical Audio & Immersive Soundscapes (COMPLETE)
 
-- **Ambient Tension:** Multi-layered background soundscapes (Ocean, Wind, Distant Gunfire).
-- **Tactical SFX:** High-impact audio for dice trays, squadron launches, and carrier hits.
-- **Historical Audio:** Radio chatter and Morse signaling for recon successes.
-- **Audio Controls:** Volume modulation and toggle settings.
+- **Web Audio API Integration**: AudioManager class with preloaded sound buffers and graceful error handling
+- **Tactical SFX**: Context-aware audio triggers for:
+  - DICE_ROLL - Plays on dice visualization
+  - EXPLOSION - Plays on carrier/Midway hits
+  - LAUNCH - Plays when units move to staging areas
+  - RECON_SUCCESS - Plays when fleets are discovered
+  - PHASE_CHANGE - Plays on phase transitions
+  - SUNK - Plays when carriers sink (damage ≥ 4)
+- **Ambient Audio**: 10-second looping ocean soundscape
+- **Audio Controls**: Volume slider (0-100%), mute/unmute toggle, persistent settings
+- **Generated SFX**: Synthetic WAV audio files (7 effects, ~1.5MB total) via Node.js generation script
+- **Store Integration**: Audio state synced with Zustand (audioEnabled, volume)
+- **Type Safety**: Fixed resolveRecon() type error blocking production builds
 
 ### 🏗️ Step 14: Advanced AI Intelligence (Nimitz Overhaul)
 
@@ -218,17 +227,41 @@ npm test
 npm run test:watch
 ```
 
+## Recent Updates (Step 13 - December 2025)
+
+### Critical Fixes
+- **Type Error Resolution**: Fixed `resolveRecon()` function type signature causing build failures
+  - Changed return type to `{ log: string[] } & Partial<Omit<GameState, 'log'>>` to avoid type conflicts
+  - Build now passes successfully with zero errors
+
+### Audio System Implementation
+- **Files Added**:
+  - `src/utils/audio.ts` - AudioManager class (104 lines)
+  - `scripts/generate-audio.js` - Audio generation script (371 lines)
+  - 7 WAV sound files in `public/sounds/` (~1.5MB total)
+- **Files Modified**:
+  - `src/store/gameStore.ts` - Added audio triggers and sync logic
+  - `src/engine/combat.ts` - Added explosion/sunk sound effects
+  - `src/components/AudioControls.tsx` - Volume/mute UI
+  - `src/components/AudioInitializer.tsx` - Browser audio initialization
+
+### Technical Debt Resolved
+- All TypeScript compilation errors fixed
+- Production build passes cleanly
+- Audio system fully integrated with game state
+- Volume and enable/disable settings persist to localStorage
+
 ## Future Enhancements
 
 Potential additions for expanded functionality:
 
+- **Step 14**: Advanced AI Intelligence (Nimitz Overhaul) - Reactive US targeting
+- **Step 15**: Replay & Tactical Analysis - AAR export and turn-by-turn replay
 - Online multiplayer support
-- AI opponent implementation
-- Additional rule variants
-- Enhanced graphics and animations
-- Sound effects and music
+- Additional rule variants and scenarios
+- Professional sound effects library (replace synthetic audio)
 - Tournament mode
-- Replay analysis tools
+- Mobile-optimized touch controls
 
 ## Conclusion
 
