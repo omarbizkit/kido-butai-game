@@ -1,14 +1,9 @@
 import React from 'react';
 import { Unit, JapaneseCarrier, UnitStatus, GameLocation } from '../types';
-import { Plane, ArrowDown, ArrowRight, Shield, Timer, XCircle } from 'lucide-react';
+import { Plane, ArrowDown, ArrowRight, Shield, Timer, XCircle, Target } from 'lucide-react';
 import { useGameStore } from '../store/gameStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../utils/cn';
 
 interface UnitTokenProps {
   unit: Unit;
@@ -23,25 +18,36 @@ const CARRIER_THEMES: Record<JapaneseCarrier, { bg: string; accent: string; labe
 };
 
 export const UnitToken: React.FC<UnitTokenProps> = ({ unit, className }: UnitTokenProps) => {
-  const { selectedUnitId, selectUnit } = useGameStore();
+  const { selectedUnitId, selectUnit, activeCombatUnitId } = useGameStore();
   const isJapan = unit.owner === 'JAPAN';
   const isSelected = selectedUnitId === unit.id;
+  const isActiveCombat = activeCombatUnitId === unit.id;
   
   const theme = (isJapan && unit.carrier) ? CARRIER_THEMES[unit.carrier as JapaneseCarrier] : { 
-    bg: 'bg-slate-900', 
-    accent: 'bg-slate-400', 
+    bg: 'bg-blue-900', 
+    accent: 'bg-white', 
     label: 'USN' 
   };
 
   const getIcon = () => {
-    const size = 16;
+    const size = 18;
     switch (unit.type) {
       case 'FIGHTER':
-        return <Plane size={size} className="drop-shadow-sm" />;
+        return <Plane size={size} className="drop-shadow-sm rotate-0" />;
       case 'DIVE_BOMBER':
-        return <ArrowDown size={size} className="drop-shadow-sm" />;
+        return (
+          <div className="relative">
+            <Plane size={size} className="drop-shadow-sm rotate-[135deg]" />
+            <Target size={10} className="absolute -bottom-1 -right-1 text-white/50" />
+          </div>
+        );
       case 'TORPEDO_BOMBER':
-        return <ArrowRight size={size} className="drop-shadow-sm" />;
+        return (
+          <div className="relative">
+            <Plane size={size} className="drop-shadow-sm rotate-90" />
+            <ArrowRight size={10} className="absolute -bottom-1 -right-1 text-white/50" />
+          </div>
+        );
       default:
         return null;
     }
@@ -60,15 +66,21 @@ export const UnitToken: React.FC<UnitTokenProps> = ({ unit, className }: UnitTok
       whileHover={{ y: -2, scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       className={cn(
-        "relative w-12 h-12 aspect-square rounded-[3px] border-2 flex flex-col items-center justify-center cursor-pointer transition-shadow overflow-hidden",
+        "relative w-12 h-12 aspect-square rounded-[3px] border-2 flex flex-col items-center justify-center cursor-pointer transition-shadow overflow-visible group/token",
         theme.bg,
-        isSelected 
+        isSelected || isActiveCombat
           ? "border-game-gold shadow-[0_0_15px_rgba(255,215,0,0.5),inset_0_0_8px_rgba(0,0,0,0.5)] z-20" 
           : "border-slate-800 shadow-lg hover:border-slate-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]",
+        isActiveCombat && "ring-2 ring-red-500 shadow-[0_0_30px_rgba(220,38,38,0.6)] scale-110",
         unit.status === 'DESTROYED' && "opacity-40 grayscale cursor-not-allowed",
         className
       )}
     >
+      {/* Strength Badge */}
+      <div className="absolute top-0.5 right-0.5 bg-slate-950/90 text-white text-[9px] font-black leading-none px-1 py-0.5 rounded-sm border border-white/20 z-10">
+         {unit.hp || 1}
+      </div>
+
       {/* Carrier Accent Stripe */}
       <div className={cn("absolute top-0 left-0 w-full h-1.5", theme.accent)} />
       
@@ -109,6 +121,24 @@ export const UnitToken: React.FC<UnitTokenProps> = ({ unit, className }: UnitTok
           />
         )}
       </AnimatePresence>
+
+      {/* Hover Tooltip */}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max hidden group-hover/token:block z-50 pointer-events-none">
+        <div className="bg-slate-900/90 text-white text-[9px] font-mono border border-white/20 rounded px-2 py-1 shadow-xl backdrop-blur-sm flex flex-col items-center gap-0.5">
+           <span className="font-bold text-game-gold uppercase tracking-wider">{unit.id.split('_').pop() || unit.id}</span>
+           <span className="text-slate-300 capitalize">{unit.type.replace('_', ' ').toLowerCase()}</span>
+           {unit.status !== 'READY' && unit.status !== 'IN_FLIGHT' && (
+             <span className={cn(
+               "font-bold uppercase text-[8px]",
+               unit.status === 'DESTROYED' ? "text-red-500" : "text-emerald-400"
+             )}>
+               {unit.status}
+             </span>
+           )}
+        </div>
+        {/* Tooltip Arrow */}
+        <div className="w-2 h-2 bg-slate-900/90 border-r border-b border-white/20 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
+      </div>
     </motion.div>
   );
 };

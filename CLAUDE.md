@@ -30,11 +30,12 @@ You are an expert full-stack developer and game designer specializing in digital
 - `scripts/`: Build and maintenance scripts.
 - `public/sounds/`: Audio assets.
 
-## Current Phase: V1 Complete + Audio System (Step 13 Complete)
+## Current Phase: V1.1 Complete (Audio/AI/Analysis Added)
 
 **Status**: Production-ready. All critical bugs fixed, audio system fully implemented and wired.
 
 ### Latest Changes (Dec 2025)
+
 - ✅ Fixed type error in `resolveRecon()` blocking builds
 - ✅ Implemented complete Web Audio API integration
 - ✅ Wired 6 tactical sound effects to game events

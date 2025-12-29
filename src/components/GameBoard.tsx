@@ -12,31 +12,27 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DiceTray } from './DiceTray';
 import { ScenarioSelector } from './ScenarioSelector';
 import { CarrierProfileModal } from './CarrierProfileModal';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { Target, Anchor, Plane, Skull, Trophy, Info, AlertTriangle, PlayCircle, BookOpen, Download, Maximize2, X, Filter, HelpCircle, FileText, RotateCcw } from 'lucide-react';
+import { generateAAR } from '../utils/export';
+import { TurnTrack } from './TurnTrack';
+import { cn } from '../utils/cn';
+import { getAdvisorBriefing } from '../engine/advisor';
+import { CarrierSilhouette } from './CarrierSilhouettes';
 
 export const GameBoard: React.FC = () => {
+  const state = useGameStore();
   const { 
-    turn, 
-    phase, 
-    carriers, 
-    units, 
-    log, 
-    isUsFleetFound, 
-    isJapanFleetFound,
-    midwayDamage,
-    selectedUnitId,
-    moveUnit,
-    resolveStrikes,
-    performAmericanStrike,
-    isGameOver,
-    resetGame
-  } = useGameStore();
+    turn, phase, carriers, units, log, isUsFleetFound, isJapanFleetFound, midwayDamage, isGameOver,
+    selectedUnitId, selectUnit, moveUnit, setNextPhase, performRecon,
+    performAmericanStrike, resolveStrikes,
+    loadScenario, resetGame
+  } = state;
 
   const [isScenarioOpen, setIsScenarioOpen] = React.useState(false);
   const [profileCarrier, setProfileCarrier] = React.useState<JapaneseCarrier | null>(null);
+  const [isLogOpen, setIsLogOpen] = React.useState(false);
+  const [isAdvisorOpen, setIsAdvisorOpen] = React.useState(false);
+  const [logFilter, setLogFilter] = React.useState<'ALL' | 'COMBAT' | 'RECON'>('ALL');
 
   const score = calculateScore({ turn, phase, carriers, units, log, isUsFleetFound, isJapanFleetFound, midwayDamage, isGameOver } as GameState);
 
@@ -56,22 +52,50 @@ export const GameBoard: React.FC = () => {
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90(#fff 1px, transparent 1px))', backgroundSize: '200px 200px' }} />
 
-      <div className="flex justify-between items-center border-b border-slate-700 pb-4">
-        <div>
-          <h2 className="text-3xl font-bold text-game-gold tracking-tight uppercase italic">
-            Time: {turn}
-          </h2>
-          <p className="text-slate-400 font-mono uppercase tracking-widest text-sm">
-            Phase: {phase}
-          </p>
+      <div className="flex flex-col gap-3 border-b border-slate-700 pb-2">
+        <div className="flex justify-between items-end">
+          <TurnTrack currentTurn={turn} className="flex-1 max-w-2xl" />
+          <div className="flex gap-4">
+             {/* Phase Indicator */}
+             <div className="flex flex-col items-end">
+                <span className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Current Phase</span>
+                <span className={cn(
+                  "text-xl font-black uppercase tracking-tighter italic",
+                  phase === 'JAPANESE' ? "text-red-500" : 
+                  phase === 'AMERICAN' ? "text-blue-400" : "text-slate-200"
+                )}>
+                  {phase}
+                </span>
+             </div>
+          </div>
         </div>
-        <div className="flex gap-4">
-          <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded font-bold text-sm uppercase transition-all">
-            Save
-          </button>
-          <button className="px-4 py-2 border border-slate-700 hover:bg-slate-800 text-white rounded font-bold text-sm uppercase transition-all">
-            Menu
-          </button>
+        
+        <div className="flex justify-between items-center bg-black/20 p-2 rounded-lg border border-white/5">
+           <div className="flex gap-4 text-xs font-mono text-slate-400">
+             <span>US FLEET: <span className={isUsFleetFound ? "text-red-500 font-bold" : "text-slate-600"}>{isUsFleetFound ? "DETECTED" : "UNKNOWN"}</span></span>
+             <span>KIDO BUTAI: <span className={isJapanFleetFound ? "text-game-gold font-bold" : "text-slate-600"}>{isJapanFleetFound ? "SPOTTED" : "HIDDEN"}</span></span>
+           </div>
+           
+           <div className="flex gap-2">
+            <button 
+              onClick={() => {
+                if (window.confirm('Restart Operation? This will reset all progress.')) {
+                  resetGame();
+                }
+              }}
+              className="px-3 py-1 bg-red-900/40 hover:bg-red-900/80 border border-red-500/30 text-red-200 rounded text-xs font-bold uppercase transition-all flex items-center gap-2"
+            >
+              <RotateCcw size={12} />
+              Reset
+            </button>
+            <button 
+              onClick={() => setIsAdvisorOpen(true)}
+              className="px-3 py-1 border border-game-gold/50 text-game-gold hover:bg-game-gold hover:text-black rounded text-xs font-bold uppercase transition-all flex items-center gap-2"
+            >
+              <HelpCircle size={12} />
+              Intel / Help
+            </button>
+           </div>
         </div>
       </div>
 
@@ -88,6 +112,14 @@ export const GameBoard: React.FC = () => {
           >
             {/* Carrier identification stripe */}
             <div className="absolute top-0 right-0 w-16 h-16 opacity-10 pointer-events-none translate-x-8 -translate-y-8 rotate-45 bg-white" />
+            
+            {/* Silhouette Background */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0">
+              <CarrierSilhouette 
+                name={carrier.name} 
+                className="w-[110%] text-white opacity-20" 
+              />
+            </div>
             
             <div className="flex justify-between items-center border-b border-white/5 pb-2">
               <h3 className="text-game-gold font-black uppercase tracking-tighter italic text-xl group-hover/card:text-white transition-colors">
@@ -155,7 +187,7 @@ export const GameBoard: React.FC = () => {
                     key={i} 
                     onClick={() => handleLocationClick('CAP')}
                     className={cn(
-                      "h-20 rounded-lg border flex flex-col items-center justify-center transition-all cursor-pointer relative overflow-hidden bg-black/40 group/cap",
+                      "h-16 rounded-lg border flex flex-col items-center justify-center transition-all cursor-pointer relative overflow-hidden bg-black/40 group/cap",
                       selectedUnitId ? "border-emerald-500/30 bg-emerald-500/5" : "border-white/5"
                     )}
                   >
@@ -173,8 +205,8 @@ export const GameBoard: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4 z-10">
-        <div className="lg:col-span-2 p-8 bg-slate-950/40 rounded-2xl border border-white/5 flex flex-col gap-6 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4 z-10 items-stretch">
+        <div className="lg:col-span-2 p-8 bg-slate-950/40 rounded-2xl border border-white/5 flex flex-col gap-6 shadow-2xl backdrop-blur-xl relative overflow-hidden h-full">
           <div className="absolute top-0 left-0 w-1 h-full bg-game-gold opacity-50" />
           
           <div className="flex justify-between items-center">
@@ -210,8 +242,18 @@ export const GameBoard: React.FC = () => {
 
           <div className="flex flex-wrap gap-4 pt-4 border-t border-white/5">
             <button 
-              onClick={() => useGameStore.getState().setNextPhase()}
-              className="px-8 py-4 bg-white text-black font-black rounded-lg hover:bg-game-gold transition-all uppercase tracking-widest text-sm shadow-xl hover:-translate-y-0.5"
+              onClick={() => state.setNextPhase()}
+              disabled={
+                (phase === 'RECON' && !state.isReconResolved) ||
+                (phase === 'AMERICAN' && !state.isStrikeResolved)
+              }
+              className={cn(
+                "px-8 py-4 font-black rounded-lg transition-all uppercase tracking-widest text-sm shadow-xl",
+                ((phase === 'RECON' && !state.isReconResolved) ||
+                 (phase === 'AMERICAN' && !state.isStrikeResolved))
+                 ? "bg-slate-700 text-slate-500 cursor-not-allowed opacity-50"
+                 : "bg-white text-black hover:bg-game-gold hover:-translate-y-0.5"
+              )}
             >
               Advance to {phase === 'CLEANUP' ? 'Next Turn' : 'Next Phase'}
             </button>
@@ -225,10 +267,20 @@ export const GameBoard: React.FC = () => {
             
             {phase === 'RECON' && (
               <button 
-                onClick={() => useGameStore.getState().performRecon()}
-                className="px-8 py-4 border-2 border-game-gold text-game-gold font-black rounded-lg hover:bg-game-gold hover:text-black transition-all uppercase tracking-widest text-sm"
+                onClick={() => state.performRecon()}
+                disabled={state.isReconResolved}
+                className={cn(
+                  "px-8 py-4 border-2 font-black rounded-lg transition-all uppercase tracking-widest text-sm",
+                  state.isReconResolved 
+                    ? "border-slate-800 text-slate-700 bg-slate-900/50 cursor-not-allowed" 
+                    : "border-game-gold text-game-gold hover:bg-game-gold hover:text-black shadow-[0_0_20px_rgba(255,215,0,0.2)]"
+                )}
               >
-                Launch Multi-Scout
+                {state.isReconResolved 
+                  ? "Recon Complete" 
+                  : (state.isUsFleetFound && state.isJapanFleetFound) 
+                    ? "Fleets Located (Confirm)" 
+                    : "Launch Multi-Scout"}
               </button>
             )}
 
@@ -249,9 +301,13 @@ export const GameBoard: React.FC = () => {
             {phase === 'AMERICAN' && (
               <button 
                 onClick={() => performAmericanStrike()}
-                className="px-8 py-4 bg-red-600 text-white font-black rounded-lg hover:bg-red-500 transition-all uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(220,38,38,0.4)] animate-pulse"
+                disabled={state.isStrikeResolved}
+                className={cn(
+                  "px-8 py-4 text-white font-black rounded-lg transition-all uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(220,38,38,0.4)]",
+                  state.isStrikeResolved ? "bg-slate-700 cursor-not-allowed opacity-50 shadow-none" : "bg-red-600 hover:bg-red-500 animate-pulse"
+                )}
               >
-                Weather the Storm
+                {state.isStrikeResolved ? "Strike Resolved" : "Weather the Storm"}
               </button>
             )}
           </div>
@@ -324,12 +380,17 @@ export const GameBoard: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-slate-900/60 rounded-2xl border border-white/5 flex flex-col gap-4 shadow-xl backdrop-blur-md">
+        <div className="p-6 bg-slate-900/60 rounded-2xl border border-white/5 flex flex-col gap-4 shadow-xl backdrop-blur-md h-full">
           <div className="flex justify-between items-center border-b border-white/5 pb-2">
             <h3 className="text-lg font-black text-white uppercase tracking-tighter italic">Combat Log</h3>
-            <span className="text-[9px] text-slate-500 font-mono uppercase tracking-widest">Archives</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-slate-500 font-mono uppercase tracking-widest hidden sm:inline">Archives</span>
+              <button onClick={() => setIsLogOpen(true)} className="text-slate-400 hover:text-white transition-colors">
+                <Maximize2 size={14} />
+              </button>
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar max-h-[500px]">
+          <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar max-h-[500px] min-h-0">
             {log.map((entry: LogEntry) => (
               <div key={entry.id} className={cn(
                 "font-mono text-[11px] leading-relaxed border-l-2 pl-3 py-1.5 transition-all group",
@@ -409,12 +470,21 @@ export const GameBoard: React.FC = () => {
               </div>
             </div>
 
-            <button 
-              onClick={() => resetGame()}
-              className="w-full py-5 bg-game-gold text-black font-black rounded-2xl hover:bg-yellow-500 transition-all uppercase tracking-widest shadow-[0_10px_30px_rgba(255,215,0,0.3)] hover:-translate-y-1 active:translate-y-0"
-            >
-              Return to Fleet Command
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => generateAAR(useGameStore.getState())}
+                className="flex-1 py-4 bg-white/10 text-white font-bold rounded-2xl hover:bg-white/20 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                <Download size={18} />
+                Export AAR
+              </button>
+              <button 
+                onClick={() => resetGame()}
+                className="flex-[2] py-4 bg-game-gold text-black font-black rounded-2xl hover:bg-yellow-500 transition-all uppercase tracking-widest shadow-[0_10px_30px_rgba(255,215,0,0.3)] hover:-translate-y-1 active:translate-y-0"
+              >
+                Return to Fleet Command
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -432,6 +502,127 @@ export const GameBoard: React.FC = () => {
             isOpen={!!profileCarrier}
             onClose={() => setProfileCarrier(null)}
           />
+        )}
+        {isLogOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 sm:p-8">
+            <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl relative overflow-hidden">
+               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-slate-950/50">
+                 <div className="flex items-center gap-4">
+                   <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">Operational Log</h2>
+                   <div className="flex bg-white/5 rounded-lg p-1 gap-1">
+                     {(['ALL', 'COMBAT', 'RECON'] as const).map(filter => (
+                       <button
+                         key={filter}
+                         onClick={() => setLogFilter(filter)}
+                         className={cn(
+                           "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                           logFilter === filter ? "bg-game-gold text-black" : "text-slate-400 hover:text-white"
+                         )}
+                       >
+                         {filter}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+                 <button onClick={() => setIsLogOpen(false)} className="text-slate-400 hover:text-white p-2 bg-white/5 hover:bg-white/10 rounded-lg">
+                   <X size={20} />
+                 </button>
+               </div>
+               <div className="flex-1 overflow-y-auto p-6 space-y-2 custom-scrollbar bg-slate-950/30">
+                 {log
+                   .filter(l => logFilter === 'ALL' || l.type === logFilter)
+                   .map((entry: LogEntry) => (
+                   <div key={entry.id} className={cn(
+                     "font-mono text-xs leading-relaxed border-l-2 pl-4 py-2 transition-all flex gap-4",
+                     entry.type === 'SYSTEM' ? "text-game-gold border-game-gold/50 bg-game-gold/5 font-bold py-3 my-2" : 
+                     entry.type === 'COMBAT' ? "text-red-400/90 border-red-500/50 hover:bg-red-500/5" :
+                     entry.type === 'RECON' ? "text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/5" :
+                     "text-slate-300 border-slate-700 hover:bg-white/5"
+                   )}>
+                     <span className="text-[10px] text-slate-500 font-bold uppercase w-16 shrink-0 pt-0.5">{entry.timestamp || '00:00'}</span>
+                     <span>{entry.message}</span>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          </div>
+        )}
+        {isAdvisorOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+             <div className="bg-slate-900 border-2 border-game-gold/30 rounded-2xl w-full max-w-2xl shadow-[0_0_50px_rgba(255,215,0,0.1)] relative overflow-hidden flex flex-col max-h-[80vh]">
+               {/* Header */}
+               <div className="p-6 border-b border-white/10 bg-black/20 flex justify-between items-start">
+                 <div className="flex gap-4">
+                   <div className="p-3 bg-game-gold/10 rounded-lg border border-game-gold/20">
+                     <FileText className="text-game-gold" size={24} />
+                   </div>
+                   <div>
+                     <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter">
+                       {getAdvisorBriefing(state).title}
+                     </h2>
+                     <p className="text-slate-400 font-mono text-xs uppercase tracking-widest mt-1">
+                       Tactical Advisory System
+                     </p>
+                   </div>
+                 </div>
+                 <button onClick={() => setIsAdvisorOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                   <X size={24} />
+                 </button>
+               </div>
+
+               {/* Content */}
+               <div className="p-8 overflow-y-auto space-y-8">
+                 {(() => {
+                   const briefing = getAdvisorBriefing(state);
+                   return (
+                     <>
+                       <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                         <h3 className="text-game-gold font-bold uppercase tracking-widest text-xs mb-2">Current Situation</h3>
+                         <p className="text-lg text-white leading-relaxed font-serif italic">"{briefing.situation}"</p>
+                       </div>
+
+                       <div>
+                         <h3 className="text-emerald-400 font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2">
+                           <AlertTriangle size={12} /> Recommended Actions
+                         </h3>
+                         <ul className="space-y-3">
+                           {briefing.orders.map((order, i) => (
+                             <li key={i} className="flex gap-3 text-sm text-slate-300 items-start">
+                               <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">{i+1}</span>
+                               <span className="leading-relaxed">{order}</span>
+                             </li>
+                           ))}
+                         </ul>
+                       </div>
+
+                       <div className="border-t border-white/10 pt-6">
+                         <h3 className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2">
+                           <BookOpen size={12} /> Rules Reference
+                         </h3>
+                         <ul className="grid grid-cols-1 gap-2">
+                           {briefing.mechanics.map((mech, i) => (
+                             <li key={i} className="flex gap-2 text-xs text-slate-400 font-mono items-center">
+                               <div className="w-1 h-1 bg-slate-600 rounded-full" />
+                               {mech}
+                             </li>
+                           ))}
+                         </ul>
+                       </div>
+                     </>
+                   );
+                 })()}
+               </div>
+               
+               <div className="p-4 border-t border-white/10 bg-black/20 text-center">
+                 <button 
+                   onClick={() => setIsAdvisorOpen(false)}
+                   className="px-8 py-3 bg-game-gold text-black font-black rounded-lg hover:bg-yellow-500 transition-all uppercase tracking-widest text-sm shadow-lg"
+                 >
+                   Acknowledge Orders
+                 </button>
+               </div>
+             </div>
+          </div>
         )}
       </AnimatePresence>
     </div>

@@ -5,9 +5,10 @@ import { applyDamage, resolveJapaneseStrike, resolveAmericanStrike } from '../en
 import { generateUSStrike } from '../engine/cup';
 import { calculateScore } from '../engine/scoring';
 import { applyScenario } from '../engine/scenarios';
-import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target, LogEntry } from '../types';
+import { GameLocation, GameState, JapaneseCarrier, Phase, Unit, Target, LogEntry, UnitStatus } from '../types';
 import { createLogEntry, logsToEntries } from '../utils/log';
 import { audioManager } from '../utils/audio';
+import { selectUsTarget } from '../engine/ai';
 
 interface GameStore extends GameState {
   selectedUnitId: string | null;
@@ -37,24 +38,26 @@ const createInitialUnits = (): Unit[] => {
   const units: Unit[] = [];
 
   carriers.forEach((carrier) => {
-    units.push({ id: `${carrier}_F1`, type: 'FIGHTER', owner: 'JAPAN', carrier, status: 'READY', location: carrier });
-    units.push({ id: `${carrier}_DB1`, type: 'DIVE_BOMBER', owner: 'JAPAN', carrier, status: 'READY', location: carrier });
-    units.push({ id: `${carrier}_TB1`, type: 'TORPEDO_BOMBER', owner: 'JAPAN', carrier, status: 'READY', location: carrier });
+    units.push({ id: `${carrier}_F1`, type: 'FIGHTER', owner: 'JAPAN', carrier, status: 'READY', location: carrier, hp: 2 });
+    units.push({ id: `${carrier}_DB1`, type: 'DIVE_BOMBER', owner: 'JAPAN', carrier, status: 'READY', location: carrier, hp: 2 });
+    units.push({ id: `${carrier}_TB1`, type: 'TORPEDO_BOMBER', owner: 'JAPAN', carrier, status: 'READY', location: carrier, hp: 2 });
   });
 
   return units;
 };
 
+const createInitialCarriers = (): Record<JapaneseCarrier, any> => ({
+  AKAGI: { name: 'AKAGI', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
+  KAGA: { name: 'KAGA', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
+  HIRYU: { name: 'HIRYU', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
+  SORYU: { name: 'SORYU', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
+});
+
 const INITIAL_STATE: GameState = {
   turn: '04:30',
   turnIndex: 0,
   phase: 'JAPANESE',
-  carriers: {
-    AKAGI: { name: 'AKAGI', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
-    KAGA: { name: 'KAGA', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
-    HIRYU: { name: 'HIRYU', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
-    SORYU: { name: 'SORYU', damage: 0, isSunk: false, capacity: 3, capSlots: [null, null] },
-  },
+  carriers: createInitialCarriers(),
   units: createInitialUnits(),
   midwayDamage: 0,
   isUsFleetFound: false,
@@ -63,6 +66,8 @@ const INITIAL_STATE: GameState = {
   isGameOver: false,
   audioEnabled: true,
   volume: 0.5,
+  isStrikeResolved: false,
+  isReconResolved: false,
  };
 
 export const useGameStore = create<GameStore>()(
@@ -90,10 +95,13 @@ export const useGameStore = create<GameStore>()(
 
         audioManager.playSFX('PHASE_CHANGE');
 
-        const updates: Partial<GameState> & { selectedUnitId: null } = {
+          
+          const updates: Partial<GameState> & { selectedUnitId: null; isStrikeResolved: boolean; isReconResolved: boolean } = {
           phase: result.nextPhase,
           log: [...logsToEntries(result.logEntries), ...state.log].slice(0, 200),
-          selectedUnitId: null
+          selectedUnitId: null,
+          isStrikeResolved: false,
+          isReconResolved: false,
         };
 
         if (result.shouldAdvanceTurn) {
@@ -106,7 +114,7 @@ export const useGameStore = create<GameStore>()(
         }
 
         if (result.nextPhase === 'CLEANUP') {
-          const recovery = processTurnTrack(state.units);
+          const recovery = processTurnTrack(state.units, state.carriers);
           updates.units = recovery.units.filter(u => u.owner === 'JAPAN');
           updates.log = [...logsToEntries(recovery.log), ...updates.log!];
         }
@@ -127,6 +135,8 @@ export const useGameStore = create<GameStore>()(
       },
       performRecon: async () => {
         const state = get();
+        if (state.isReconResolved) return;
+
         const result = resolveRecon(state);
         const { log, ...others } = result;
 
@@ -149,70 +159,122 @@ export const useGameStore = create<GameStore>()(
         set((prev: GameStore) => ({
           ...prev,
           ...others,
-          log: [...logsToEntries(log, 'RECON'), ...prev.log].slice(0, 200)
+          log: [...logsToEntries(log, 'RECON'), ...prev.log].slice(0, 200),
+          isReconResolved: true
         }));
       },
       performAmericanStrike: async () => {
         const state = get();
-        if (state.phase !== 'AMERICAN') return;
+        if (state.phase !== 'AMERICAN' || state.isStrikeResolved) return;
         
-        const { units: usUnits, log: usLog } = generateUSStrike();
-        let currentCarriers = { ...state.carriers };
-        let newLogs = [...usLog];
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+        // Pre-check: Is Kido Butai found?
+        if (!state.isJapanFleetFound) {
+           set((prev) => ({
+               log: [createLogEntry('Kido Butai remains undetected. No US strike launched.', 'RECON'), ...prev.log].slice(0, 200),
+               isStrikeResolved: true
+           }));
+           return;
+        }
+
+        // 1. Generate Strike Force
+        const { units: usUnits, log: usLog } = generateUSStrike();
+
+        // 2. Check Valid Japan Targets
         const carriersArr: JapaneseCarrier[] = ['AKAGI', 'KAGA', 'HIRYU', 'SORYU'];
-        const activeCarriers = carriersArr.filter(c => !currentCarriers[c].isSunk);
+        const activeCarriers = carriersArr.filter(c => !state.carriers[c].isSunk);
 
         if (activeCarriers.length === 0) {
           set({ log: [createLogEntry('No Japanese carriers left for US to target!', 'SYSTEM'), ...state.log].slice(0, 200) });
           return;
         }
 
-        const allRolls: number[] = [];
+        // 3. Spawn US Units on Board (Visual Setup)
+        // Add them to state immediately so they appear in STAGING
+        const initialUsUnits = usUnits.map(u => ({ ...u, status: 'IN_FLIGHT' as UnitStatus, location: 'STAGING' as GameLocation }));
         
-        const usResults = usUnits.map(u => {
-          const target = activeCarriers[Math.floor(Math.random() * activeCarriers.length)];
-          const result = resolveAmericanStrike(u, target, state);
-          allRolls.push(...result.rolls);
-          
-          if (result.destroyed) {
-            newLogs.push(`CRITICAL: US ${u.type} shot down by CAP!`);
-          } else if (result.aborted) {
-            newLogs.push(`US ${u.type} aborted attack due to AA/CAP.`);
-          } else {
-            const attackType = result.hits > 1 ? 'SPECIAL' : 'NORMAL';
-            newLogs.push(`${attackType} ATTACK: US ${u.type} rolls vs ${target}: ${result.hits} hit(s)`);
-            if (result.hits > 0) {
-              const damageResult = applyDamage(target, result.hits, { ...state, carriers: currentCarriers });
-              if (damageResult.carriers) currentCarriers = damageResult.carriers;
-              newLogs.push(...damageResult.log);
-            }
-          }
+        set((prev) => ({
+             units: [...prev.units.filter(u => u.owner === 'JAPAN'), ...initialUsUnits],
+             log: [...logsToEntries(usLog, 'COMBAT'), ...prev.log].slice(0, 200)
+        }));
+        
+        await delay(1500); // Allow user to see "US Strike Incoming" logic
 
-          // CAP Exhaustion Logic: 
-          // If Torpedo Bombers were intercepted, flip one CAP unit on that carrier to LOW
-          if (u.type === 'TORPEDO_BOMBER') {
-            const carrierUnits = get().units.filter(unit => unit.location === 'CAP' && unit.carrier === target && unit.status === 'CAP_NORMAL');
-            if (carrierUnits.length > 0) {
-              const unitToExhaust = carrierUnits[0];
-              const updatedUnits = get().units.map(unit => 
-                unit.id === unitToExhaust.id ? { ...unit, status: 'CAP_LOW' as const } : unit
-              );
-              set({ units: updatedUnits });
-              newLogs.push(`NOTICE: ${target} CAP unit ${unitToExhaust.id} exhausted (LOW CAP) after intercepting Torpedo Bombers.`);
-            }
-          }
+        // 4. Sequential Resolution Loop
+        for (const u of initialUsUnits) {
+             const currentState = get(); 
+             
+             // AI Logic
+             const aiDecision = selectUsTarget(currentState);
+             const target = aiDecision.target;
+             
+             set({ activeCombatUnitId: u.id, activeCombatTarget: target });
+             
+             await delay(1000);
 
-          return u;
-        });
+             // Combat Logic
+             const result = resolveAmericanStrike(u, target, currentState);
+             
+             // Visual Rolls
+             if (result.rolls.length > 0) {
+                await currentState.showVisualRolls(result.rolls);
+             } else {
+                 await delay(500);
+             }
 
-        if (allRolls.length > 0) {
-          await get().showVisualRolls(allRolls);
+             // Determine Outcome & Side Effects
+             let currentCarriers = { ...currentState.carriers };
+             let currentUnits = [...currentState.units];
+             const unitLog: string[] = [];
+             
+             if (result.destroyed) {
+                 unitLog.push(`CRITICAL: US ${u.type} shot down by CAP!`);
+             } else if (result.aborted) {
+                 unitLog.push(`US ${u.type} aborted attack.`);
+             } else {
+                 const attackType = result.hits > 1 ? 'SPECIAL' : 'NORMAL';
+                 unitLog.push(`${attackType}: US ${u.type} hits ${target} for ${result.hits}`);
+                 if (result.hits > 0) {
+                     const dmg = applyDamage(target, result.hits, { ...currentState, carriers: currentCarriers });
+                     currentCarriers = dmg.carriers || currentCarriers; 
+                     unitLog.push(...dmg.log);
+                 }
+             }
+
+             // CAP Exhaustion Logic
+             if (u.type === 'TORPEDO_BOMBER') {
+                 const capIdx = currentUnits.findIndex(unit => unit.location === 'CAP' && unit.carrier === target && unit.status === 'CAP_NORMAL');
+                 if (capIdx !== -1) {
+                     const unitToExhaust = currentUnits[capIdx];
+                     currentUnits[capIdx] = { ...unitToExhaust, status: 'CAP_LOW' };
+                     unitLog.push(`NOTICE: ${target} CAP unit ${unitToExhaust.id} exhausted (LOW CAP).`);
+                 }
+             }
+
+             // Update US Unit Status
+             const finalStatus: UnitStatus = result.destroyed ? 'DESTROYED' : 'RETURNING';
+             const usUnitIdx = currentUnits.findIndex(unit => unit.id === u.id);
+             if (usUnitIdx !== -1) {
+                 currentUnits[usUnitIdx] = { ...currentUnits[usUnitIdx], status: finalStatus };
+             }
+
+             // Apply Update for this Step
+             set((prev) => ({
+                 units: currentUnits,
+                 carriers: currentCarriers,
+                 log: [...logsToEntries(unitLog, 'COMBAT'), ...prev.log].slice(0, 200),
+                 activeCombatUnitId: null
+             }));
+
+             await delay(1000); 
         }
 
+        // 5. Wrap Up
         set({
-          carriers: currentCarriers,
-          log: [...logsToEntries(newLogs, 'COMBAT'), ...state.log].slice(0, 200)
+            isStrikeResolved: true,
+            activeCombatUnitId: null,
+            activeCombatTarget: null
         });
       },
       moveUnit: (unitId: string, targetLocation: GameLocation) => {
@@ -282,17 +344,28 @@ export const useGameStore = create<GameStore>()(
             const result = resolveJapaneseStrike(u, target, state);
             allRolls.push(...result.rolls);
             
-            if (result.destroyed) {
-              newLogs.push(`CRITICAL: ${u.id} (${u.type}) intercepted and DESTROYED! (Roll: ${result.rolls[0]})`);
-              return { ...u, status: 'DESTROYED' as const, location: 'POOL' as GameLocation };
+            // Check HP reduction
+            let nextUnit = { ...u };
+            if (result.attackerDamage && result.attackerDamage > 0) {
+               nextUnit.hp = Math.max(0, (u.hp || 1) - result.attackerDamage);
+               newLogs.push(`${u.id} - Damage: ${result.attackerDamage} (HP: ${nextUnit.hp})`);
+               
+               if (nextUnit.hp <= 0) {
+                   newLogs.push(`CRITICAL: ${u.id} shot down!`);
+                   return { ...nextUnit, status: 'DESTROYED' as UnitStatus, location: 'POOL' as GameLocation };
+               }
+            } else if (result.destroyed) {
+                // Fallback
+                newLogs.push(`CRITICAL: ${u.id} shot down!`);
+                return { ...nextUnit, status: 'DESTROYED' as UnitStatus, location: 'POOL' as GameLocation, hp: 0 };
             }
 
             if (result.aborted) {
-              newLogs.push(`${u.id} (${u.type}) ABORTED mission and returning. (Rolls: ${result.rolls.join(',')})`);
-              return { ...u, status: 'RETURNING' as const, location: 'TURN_TRACK' as GameLocation, turnsUntilReady: 3 };
+              newLogs.push(`${u.id} ABORTED mission.`);
+              return { ...nextUnit, status: 'RETURNING' as UnitStatus, location: 'TURN_TRACK' as GameLocation, turnsUntilReady: 3 };
             }
 
-            newLogs.push(`${u.id} (${u.type}) rolls ${result.rolls.join(',')} vs ${target}: ${result.hits} hit(s)`);
+            newLogs.push(`${u.id} hits ${target}: ${result.hits} hit(s)`);
             
             if (result.hits > 0) {
               const damageResult = applyDamage(target, result.hits, { ...state, carriers: currentCarriers, midwayDamage: currentMidwayDamage } as GameState);
@@ -301,8 +374,7 @@ export const useGameStore = create<GameStore>()(
               newLogs.push(...damageResult.log);
             }
 
-            // After strike, unit returns (simulated by moving to TURN_TRACK)
-            return { ...u, location: 'TURN_TRACK' as GameLocation, status: 'RETURNING' as const, turnsUntilReady: 3 };
+            return { ...nextUnit, location: 'TURN_TRACK' as GameLocation, status: 'RETURNING' as const, turnsUntilReady: 3 };
           }
           return u;
         });
@@ -322,7 +394,15 @@ export const useGameStore = create<GameStore>()(
         const newState = applyScenario(scenarioId, { ...INITIAL_STATE, units: createInitialUnits() } as GameStore);
         set(newState);
       },
-      resetGame: () => set(INITIAL_STATE),
+      resetGame: () => {
+        set({
+           ...INITIAL_STATE,
+           units: createInitialUnits(),
+           carriers: createInitialCarriers(),
+           log: [createLogEntry('Game reset. Good luck, Admiral.', 'SYSTEM')]
+        });
+        audioManager.playSFX('PHASE_CHANGE');
+      },
     }),
     {
       name: 'kido-butai-storage',

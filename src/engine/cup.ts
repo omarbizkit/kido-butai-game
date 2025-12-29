@@ -24,6 +24,7 @@ export const generateUSStrike = (): { units: Unit[]; log: string[] } => {
       owner: 'US',
       status: 'IN_FLIGHT',
       location: 'FLEET_APPROACH' as GameLocation,
+      hp: 1,
     });
     log.push(`US Bomber draw: Real unit pulled (${type}).`);
   }
@@ -44,6 +45,7 @@ export const generateUSStrike = (): { units: Unit[]; log: string[] } => {
       owner: 'US',
       status: 'IN_FLIGHT',
       location: 'FLEET_APPROACH' as GameLocation,
+      hp: 3,
     });
     log.push('US Fighter draw: Real unit pulled (FIGHTER).');
   }

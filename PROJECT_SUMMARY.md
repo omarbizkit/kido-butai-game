@@ -121,25 +121,28 @@ kido-butai/
 - **Tactical SFX**: Context-aware audio triggers for:
   - DICE_ROLL - Plays on dice visualization
   - EXPLOSION - Plays on carrier/Midway hits
-  - LAUNCH - Plays when units move to staging areas
-  - RECON_SUCCESS - Plays when fleets are discovered
-  - PHASE_CHANGE - Plays on phase transitions
-  - SUNK - Plays when carriers sink (damage ≥ 4)
-- **Ambient Audio**: 10-second looping ocean soundscape
-- **Audio Controls**: Volume slider (0-100%), mute/unmute toggle, persistent settings
-- **Generated SFX**: Synthetic WAV audio files (7 effects, ~1.5MB total) via Node.js generation script
-- **Store Integration**: Audio state synced with Zustand (audioEnabled, volume)
-- **Type Safety**: Fixed resolveRecon() type error blocking production builds
 
-### 🏗️ Step 14: Advanced AI Intelligence (Nimitz Overhaul)
+### ✅ Step 13: Tactical Audio & Immersive Soundscapes
 
-- **Reactive US Strikes:** US AI targets weak points and concentrates fire on high-value targets.
-- **Dummy Token Bluffing:** Enhanced randomization logic for strike package compositions.
+- **Audio Engine**: Implemented `AudioManager` with Web Audio API.
+- **SFX Triggers**: Wired up Dice Rolls, Combat Hits, Launches, and Phase changes.
+- **Controls**: Added Volume and Mute controls to the UI.
 
-### 🏗️ Step 15: Replay & Tactical Analysis
+### ✅ Step 14: Advanced AI Intelligence
 
-- **AAR Export:** Downloadable JSON "After Action Reports".
-- **Turn-by-Turn Replay:** Interactive visual review of the log history.
+- **Nimitz Logic**: Implemented `selectUsTarget` for smart US targeting.
+- **Strategic Prioritization**: AI targets wounded carriers and weak CAP.
+- **Narrative AI**: Added log entries explaining AI targeting decisions.
+
+### ✅ Step 15: Replay & Tactical Analysis
+
+- **AAR Export**: JSON "After Action Report" download button added to Mission Report.
+- **Operational Log**: Added specific "Maximize" view for the log with filtering (Combat/Recon/All).
+
+### 🚀 Step 16: Deployment & Launch
+
+- Prepare for Vercel/Netlify deployment.
+- Final production build optimization.
 
 ## Rules Fidelity
 
@@ -227,14 +230,32 @@ npm test
 npm run test:watch
 ```
 
-## Recent Updates (Step 13 - December 2025)
+## Recent Updates (Steps 13-17 - December 2025)
+
+### Step 17: Rules Enforcement, Balance & Polish
+
+- **Inventory & Balance**:
+  - Implemented standard **3-Squadron Roster** per Carrier.
+  - Implemented **Step Reduction System** (HP): Japanese Units have 2 Steps (Flip/Full), US Units have 1 Step (Fragile Waves).
+  - Reduced US Strike power (HP: 1) to balance against limited CAP.
+- **Rules Fidelity**:
+  - **Sunk Carrier Logic**: Sunk carriers can no longer launch/recover aircraft. Returning units ditch if carrier is sunk.
+  - **Advance Phase Blocking**: Prevented advancing phase until mandatory actions (Recon, Strike) are resolved.
+  - **Hidden Immunity**: US cannot launch strikes if Kido Butai is not found.
+  - **Auto-Recon**: Recon phase auto-confirms if fleets are already located.
+- **Visual & UX Polish**:
+  - **Carrier Silhouettes**: Added distinct, procedural SVG silhouettes for Akagi, Kaga, Hiryu, Soryu.
+  - **Interactive Combat**: "Weather the Storm" phase now resolves strikes sequentially with visual highlights.
+  - **Unit Badges**: Added Step/HP counters to unit tokens.
 
 ### Critical Fixes
+
 - **Type Error Resolution**: Fixed `resolveRecon()` function type signature causing build failures
   - Changed return type to `{ log: string[] } & Partial<Omit<GameState, 'log'>>` to avoid type conflicts
   - Build now passes successfully with zero errors
 
 ### Audio System Implementation
+
 - **Files Added**:
   - `src/utils/audio.ts` - AudioManager class (104 lines)
   - `scripts/generate-audio.js` - Audio generation script (371 lines)
@@ -246,6 +267,7 @@ npm run test:watch
   - `src/components/AudioInitializer.tsx` - Browser audio initialization
 
 ### Technical Debt Resolved
+
 - All TypeScript compilation errors fixed
 - Production build passes cleanly
 - Audio system fully integrated with game state

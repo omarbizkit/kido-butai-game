@@ -8,6 +8,7 @@ export interface CombatResult {
   hits: number;
   aborted: boolean;
   destroyed: boolean;
+  attackerDamage?: number;
 }
 
 export type Phase = 'JAPANESE' | 'RECON' | 'AMERICAN' | 'CLEANUP';
@@ -28,7 +29,8 @@ export type GameLocation =
   | 'MIDWAY_TARGET' 
   | 'US_POOL' 
   | 'TURN_TRACK'
-  | 'CAP';
+  | 'CAP'
+  | 'POOL';
 
 export interface Unit {
   id: string;
@@ -38,6 +40,7 @@ export interface Unit {
   status: UnitStatus;
   location: GameLocation;
   turnsUntilReady?: number;
+  hp: number;
 }
 
 export interface CarrierState {
@@ -64,6 +67,10 @@ export interface GameState {
   volume: number;
   activeRolls?: number[];
   currentScenario?: string;
+  isStrikeResolved: boolean;
+  isReconResolved: boolean;
+  activeCombatUnitId?: string | null;
+  activeCombatTarget?: Target | null;
 }
 
 export interface LogEntry {

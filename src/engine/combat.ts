@@ -12,27 +12,27 @@ export const resolveAA = (unit: Unit): { aborted: boolean; roll: number } => {
 export const resolveInterception = (
   unit: Unit,
   isUsCap: boolean
-): { destroyed: boolean; aborted: boolean; roll: number } => {
+): { damage: number; aborted: boolean; roll: number } => {
   const [roll] = rollDice(1);
   let aborted = false;
-  let destroyed = false;
+  let damage = 0;
 
   if (isUsCap) {
     if (unit.type === 'FIGHTER') {
-      // US CAP vs Japanese Fighter: 6 hit (destroy)
-      if (roll >= 6) destroyed = true;
+      // US CAP vs Japanese Fighter: 6 hit
+      if (roll >= 6) damage = 1;
     } else {
-      // US CAP vs Japanese Bomber: 5+ hit (destroy), 3-4 abort
-      if (roll >= 5) destroyed = true;
+      // US CAP vs Japanese Bomber: 5+ hit, 3-4 abort
+      if (roll >= 5) damage = 1;
       else if (roll >= 3) aborted = true;
     }
   } else {
     // Japanese Fighter vs US CAP (represented as rolls for the attacker)
     // 5+ hit
-    if (roll >= 5) destroyed = true; 
+    if (roll >= 5) damage = 1; 
   }
 
-  return { destroyed, aborted, roll };
+  return { damage, aborted, roll };
 };
 
 export const resolveJapaneseStrike = (
@@ -54,13 +54,19 @@ export const resolveJapaneseStrike = (
   // but they can be bypassed or defeated.
   if (target === 'US_TF') {
     if (state.isUsFleetFound) { 
-      // Simplified: US always has some CAP if found, unless we implement US carrier damage
+      // Simplified: US always has some CAP if found
       const intercept = resolveInterception(unit, true);
       result.rolls.push(intercept.roll);
-      if (intercept.destroyed) {
-        result.destroyed = true;
-        return result;
+      
+      if (intercept.damage > 0) {
+        result.attackerDamage = (result.attackerDamage || 0) + intercept.damage;
+        // Check if damage exceeds HP
+        if (result.attackerDamage >= unit.hp) {
+          result.destroyed = true;
+          return result;
+        }
       }
+      
       if (intercept.aborted) {
         result.aborted = true;
         return result;
@@ -84,8 +90,8 @@ export const resolveJapaneseStrike = (
   const isUnopposed = target === 'MIDWAY'; // Midway is always unopposed by CAP in this game
 
   if (isUnopposed) {
-    // Special Rule: Hits = Pips rolled
-    result.hits = attackRoll;
+    // Unopposed: High chance to hit, damage is 1
+    if (attackRoll >= 3) result.hits = 1;
   } else {
     // Normal Attack: 1 hit on success
     if (unit.type === 'FIGHTER') {
@@ -137,16 +143,26 @@ export const resolveAmericanStrike = (
     const [roll] = rollDice(1);
     result.rolls.push(roll);
     
+    let damage = 0;
+    
     if (unit.type === 'FIGHTER') {
       // Fighter vs Fighter: 5+ destroy
-      if (roll >= 5) result.destroyed = true;
+      if (roll >= 5) damage = 1;
     } else {
-      // CAP vs US Bomber: 5+ destroy, 3-4 abort
-      if (roll >= 5) result.destroyed = true;
+      // CAP vs US Bomber: 5+ hit, 3-4 abort
+      if (roll >= 5) damage = 1;
       else if (roll >= 3) result.aborted = true;
     }
     
-    if (result.destroyed || result.aborted) return result;
+    if (damage > 0) {
+       result.attackerDamage = (result.attackerDamage || 0) + damage;
+       if (result.attackerDamage >= unit.hp) {
+         result.destroyed = true;
+         return result;
+       }
+    }
+    
+    if (result.aborted) return result;
   }
 
   // 2. Japanese AA
@@ -165,8 +181,8 @@ export const resolveAmericanStrike = (
   // UNOPPOSED CHECK
   // Unopposed if no CAP was engaged
   if (!capEngaged) {
-    // Special Rule: Pips = Hits
-    result.hits = attackRoll;
+    // Unopposed: High chance to hit, damage is 1
+    if (attackRoll >= 3) result.hits = 1;
   } else {
     // Normal Attack
     if (unit.type === 'DIVE_BOMBER') {

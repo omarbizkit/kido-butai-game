@@ -2,13 +2,24 @@ import { Phase, GameState, GameLocation, Unit } from '../types';
 
 export const PHASES: Phase[] = ['JAPANESE', 'RECON', 'AMERICAN', 'CLEANUP'];
 
-export const processTurnTrack = (units: Unit[]): { units: Unit[]; log: string[] } => {
+export const processTurnTrack = (units: Unit[], carriers: Record<string, import('../types').CarrierState>): { units: Unit[]; log: string[] } => {
   const log: string[] = [];
   const nextUnits = units.map(u => {
     // 1. Recover returning units
     if (u.location === 'TURN_TRACK' && u.turnsUntilReady !== undefined) {
       const nextTurns = u.turnsUntilReady - 1;
       if (nextTurns <= 0) {
+        // Validation: Cannot land on sunk carrier
+        if (u.carrier && carriers[u.carrier] && carriers[u.carrier].isSunk) {
+          log.push(`${u.id} unable to land on SUNK ${u.carrier}. Unit lost (Ditched).`);
+          return {
+             ...u,
+             location: 'POOL' as GameLocation,
+             status: 'DESTROYED' as const,
+             turnsUntilReady: undefined
+          };
+        }
+
         log.push(`${u.id} returned to ${u.carrier || 'Ready Deck'} and is now combat ready.`);
         return {
           ...u,
@@ -39,6 +50,12 @@ export interface RulesResult {
 
 export const canMoveUnit = (unit: Unit, targetLocation: GameLocation, state: GameState): { allowed: boolean; reason?: string } => {
   if (state.phase !== 'JAPANESE') return { allowed: false, reason: 'Can only move units in Japanese Phase' };
+  
+  // Check Sunk Status
+  if (unit.carrier && state.carriers[unit.carrier].isSunk) {
+    if (unit.location === 'POOL' || unit.status === 'DESTROYED') return { allowed: false };
+    return { allowed: false, reason: 'Carrier is SUNK. Flight operations ceased.' };
+  }
   
   // Basic carrier capacity check (simulated as 3 for now in summary, but types have slots)
   if (targetLocation === 'CAP') {
